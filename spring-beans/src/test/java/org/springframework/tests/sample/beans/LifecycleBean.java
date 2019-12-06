@@ -132,6 +132,9 @@ public class LifecycleBean implements BeanNameAware, BeanFactoryAware, Initializ
 		if (!this.inited || (this.initMethodDeclared && !this.initedViaDeclaredInitMethod) ||
 				!this.postProcessedAfterInit) {
 			throw new RuntimeException("Factory didn't initialize lifecycle object correctly");
+		}else
+		{
+			System.out.println("不执行");
 		}
 	}
 

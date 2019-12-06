@@ -31,7 +31,7 @@ import org.springframework.util.StringValueResolver;
  * Serves as base class for
  * {@link org.springframework.beans.factory.support.BeanDefinitionRegistry}
  * implementations.
- *
+ * bean
  * @author Juergen Hoeller
  * @since 2.5.2
  */

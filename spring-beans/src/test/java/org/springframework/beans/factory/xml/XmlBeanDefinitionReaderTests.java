@@ -53,6 +53,10 @@ public class XmlBeanDefinitionReaderTests {
 		new XmlBeanDefinitionReader(registry).setDocumentReaderClass(null);
 	}
 
+	/**
+	 *
+	 * @throws Exception
+	 */
 	@Test(expected = IllegalArgumentException.class)
 	public void setParserClassToUnsupportedParserType() throws Exception {
 		SimpleBeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();

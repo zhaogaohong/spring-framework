@@ -70,16 +70,29 @@ public class SimpleBeanDefinitionRegistry extends SimpleAliasRegistry implements
 		return this.beanDefinitionMap.containsKey(beanName);
 	}
 
+	/**
+	 * 获取所有bean的名称
+	 * @return
+	 */
 	@Override
 	public String[] getBeanDefinitionNames() {
 		return StringUtils.toStringArray(this.beanDefinitionMap.keySet());
 	}
 
+	/**
+	 * bean 计数
+	 * @return
+	 */
 	@Override
 	public int getBeanDefinitionCount() {
 		return this.beanDefinitionMap.size();
 	}
 
+	/**
+	 * bean 是否在容器中
+	 * @param beanName the name to check
+	 * @return
+	 */
 	@Override
 	public boolean isBeanNameInUse(String beanName) {
 		return isAlias(beanName) || containsBeanDefinition(beanName);

@@ -57,6 +57,7 @@ public class ClassPathXmlApplicationContextTests {
 	private static final String CONTEXT_A = "test/contextA.xml";
 	private static final String CONTEXT_B = "test/contextB.xml";
 	private static final String CONTEXT_C = "test/contextC.xml";
+	private static final String CONTEXT_D = "test/contextD.xml";
 	private static final String FQ_CONTEXT_A = PATH + CONTEXT_A;
 	private static final String FQ_CONTEXT_B = PATH + CONTEXT_B;
 	private static final String FQ_CONTEXT_C = PATH + CONTEXT_C;
@@ -77,6 +78,16 @@ public class ClassPathXmlApplicationContextTests {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(FQ_SIMPLE_CONTEXT);
 		assertTrue(ctx.containsBean("someMessageSource"));
 		ctx.close();
+	}
+
+	@Test
+	public void testSingleConfigLocation2() {
+		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(CONTEXT_D);
+		System.out.println("context 启动成功");
+		// 从 context 中取出我们的 Bean，而不是用 new MessageServiceImpl() 这种方式
+		MessageService messageService = ctx.getBean(MessageService.class);
+		// 这句将输出: hello world
+		System.out.println(messageService.getMessage());
 	}
 
 	@Test
