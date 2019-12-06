@@ -52,6 +52,18 @@ public class TxNamespaceHandlerTests {
 		this.setAgeMethod = ITestBean.class.getMethod("setAge", int.class);
 	}
 
+	// add
+	@Test
+	public void invokeTransactional2() {
+		ITestBean bean = getTestBean2();
+		bean.returnsThis(); // 测试，我们对 @Transactional 注解的效果
+//        bean.getAge(); // 测试，原有 xml 配置的事务的效果
+	}
+
+	// add
+	private ITestBean getTestBean2() {
+		return (ITestBean) context.getBean("testBean2");
+	}
 
 	@Test
 	public void isProxy() {

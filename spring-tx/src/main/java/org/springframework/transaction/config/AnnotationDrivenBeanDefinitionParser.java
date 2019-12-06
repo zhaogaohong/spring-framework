@@ -60,11 +60,11 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 		registerTransactionalEventListenerFactory(parserContext);
 		String mode = element.getAttribute("mode");
 		if ("aspectj".equals(mode)) {
-			// mode="aspectj"
+			// mode="aspectj" //提供对Aspectj方式进行事物切入的支持
 			registerTransactionAspect(element, parserContext);
 		}
 		else {
-			// mode="proxy"
+			// mode="proxy" 动态代理
 			AopAutoProxyConfigurer.configureAutoProxyCreator(element, parserContext);
 		}
 		return null;
@@ -83,6 +83,8 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 	}
 
 	private static void registerTransactionManager(Element element, BeanDefinition def) {
+		//当<tx:annotation-driven/>标签在不指定transaction-manager属性的时候，
+		// 会默认寻找id固定名为transactionManager的bean作为事务管理器这个注意事项么，就是在这里实现的
 		def.getPropertyValues().add("transactionManagerBeanName",
 				TxNamespaceHandler.getTransactionManagerName(element));
 	}
@@ -101,28 +103,32 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 	private static class AopAutoProxyConfigurer {
 
 		public static void configureAutoProxyCreator(Element element, ParserContext parserContext) {
+			//最外围的if判断限制了<tx:annotation-driven/>标签只能被解析一次，所以只有第一次被解析的标签会生效
 			AopNamespaceUtils.registerAutoProxyCreatorIfNecessary(parserContext, element);
 
 			String txAdvisorBeanName = TransactionManagementConfigUtils.TRANSACTION_ADVISOR_BEAN_NAME;
 			if (!parserContext.getRegistry().containsBeanDefinition(txAdvisorBeanName)) {
 				Object eleSource = parserContext.extractSource(element);
 
-				// Create the TransactionAttributeSource definition.
+				//1、 Create the TransactionAttributeSource definition.
+				//注册了三个BeanDefinition，分别为AnnotationTransactionAttributeSource、TransactionInterceptor和BeanFactoryTransactionAttributeSourceAdvisor，
+				// 并将前两个BeanDefinition添加到第三个BeanDefinition的属性当中，这三个bean支撑了整个事务功能
 				RootBeanDefinition sourceDef = new RootBeanDefinition(
 						"org.springframework.transaction.annotation.AnnotationTransactionAttributeSource");
 				sourceDef.setSource(eleSource);
 				sourceDef.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
 				String sourceName = parserContext.getReaderContext().registerWithGeneratedName(sourceDef);
 
-				// Create the TransactionInterceptor definition.
+				//2、 Create the TransactionInterceptor definition.
 				RootBeanDefinition interceptorDef = new RootBeanDefinition(TransactionInterceptor.class);
 				interceptorDef.setSource(eleSource);
 				interceptorDef.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
+				//重点
 				registerTransactionManager(element, interceptorDef);
 				interceptorDef.getPropertyValues().add("transactionAttributeSource", new RuntimeBeanReference(sourceName));
 				String interceptorName = parserContext.getReaderContext().registerWithGeneratedName(interceptorDef);
 
-				// Create the TransactionAttributeSourceAdvisor definition.
+				// 3、Create the TransactionAttributeSourceAdvisor definition.
 				RootBeanDefinition advisorDef = new RootBeanDefinition(BeanFactoryTransactionAttributeSourceAdvisor.class);
 				advisorDef.setSource(eleSource);
 				advisorDef.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
