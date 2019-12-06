@@ -43,6 +43,9 @@ import org.springframework.beans.PropertyValues;
  * @see org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#setCustomTargetSourceCreators
  * @see org.springframework.aop.framework.autoproxy.target.LazyInitTargetSourceCreator
  */
+//发现没有，InstantiationAwareBeanPostProcessor 是 Instantiation，BeanPostProcessor 是 Initialization，
+// 它代表的是 bean 在实例化完成并且属性注入完成，在执行 init-method 的前后进行作用的。
+//而 InstantiationAwareBeanPostProcessor 的执行时机要前面一些，大家需要翻下 IOC 的源码：
 public interface InstantiationAwareBeanPostProcessor extends BeanPostProcessor {
 
 	/**

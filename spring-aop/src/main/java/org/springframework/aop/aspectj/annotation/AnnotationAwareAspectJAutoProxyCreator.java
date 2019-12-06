@@ -46,6 +46,8 @@ import org.springframework.util.Assert;
  * @see org.springframework.aop.aspectj.annotation.AspectJAdvisorFactory
  */
 @SuppressWarnings("serial")
+//和前面介绍的 DefaultAdvisorAutoProxyCreator 一样，它也是一个 BeanPostProcessor，剩下的我们就不说了，
+// 它和它的父类 AspectJAwareAdvisorAutoProxyCreator 都不复杂。
 public class AnnotationAwareAspectJAutoProxyCreator extends AspectJAwareAdvisorAutoProxyCreator {
 
 	private List<Pattern> includePatterns;
