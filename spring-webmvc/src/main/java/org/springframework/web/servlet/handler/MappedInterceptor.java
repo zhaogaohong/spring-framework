@@ -132,8 +132,17 @@ public final class MappedInterceptor implements HandlerInterceptor {
 	 * @param lookupPath the current request path
 	 * @param pathMatcher a path matcher for path pattern matching
 	 */
+//	<mvc:interceptors>
+//    <mvc:interceptor>
+//        <mvc:mapping path="/interceptor/**" />
+//        <mvc:exclude-mapping path="/interceptor/b/*" />
+//        <bean class="com.elim.learn.spring.mvc.interceptor.MyInterceptor" />
+//    </mvc:interceptor>
+//</mvc:interceptors>
+//	每一个 <mvc:interceptor /> 标签，将被解析成一个 MappedInterceptor Bean 对象。
 	public boolean matches(String lookupPath, PathMatcher pathMatcher) {
 		PathMatcher pathMatcherToUse = (this.pathMatcher != null ? this.pathMatcher : pathMatcher);
+		// 先排重
 		if (!ObjectUtils.isEmpty(this.excludePatterns)) {
 			for (String pattern : this.excludePatterns) {
 				if (pathMatcherToUse.match(pattern, lookupPath)) {
@@ -141,9 +150,11 @@ public final class MappedInterceptor implements HandlerInterceptor {
 				}
 			}
 		}
+		// 特殊，如果包含为空，则默认就是包含
 		if (ObjectUtils.isEmpty(this.includePatterns)) {
 			return true;
 		}
+		// 后包含
 		for (String pattern : this.includePatterns) {
 			if (pathMatcherToUse.match(pattern, lookupPath)) {
 				return true;

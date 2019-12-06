@@ -137,6 +137,8 @@ public class SpringServletContainerInitializer implements ServletContainerInitia
 	 * @see AnnotationAwareOrderComparator
 	 */
 	@Override
+	//它维护了整个 web 容器中注册的 servlet，filter，listener
+	//使用 ServletContainerInitializer 和 SPI 机制，我们的 web 应用便可以彻底摆脱 web.xml 了。
 	public void onStartup(Set<Class<?>> webAppInitializerClasses, ServletContext servletContext)
 			throws ServletException {
 
@@ -144,8 +146,9 @@ public class SpringServletContainerInitializer implements ServletContainerInitia
 
 		if (webAppInitializerClasses != null) {
 			for (Class<?> waiClass : webAppInitializerClasses) {
-				// Be defensive: Some servlet containers provide us with invalid classes,
-				// no matter what @HandlesTypes says...
+				// <1>英文注释是 spring 源码中自带的，它提示我们由于 servlet 厂商实现的差异，onStartup 方法会加载我们本不想处理的 class，
+				// 所以进行了特判另外，也要注意下 @HandlesTypes(WebApplicationInitializer.class) 注解，如果厂商正确的实现 @HandlesTypes 的逻辑，
+				// 传入的 Set<Class<?>> webAppInitializerClasses 都是 WebApplicationInitializer 对象
 				if (!waiClass.isInterface() && !Modifier.isAbstract(waiClass.getModifiers()) &&
 						WebApplicationInitializer.class.isAssignableFrom(waiClass)) {
 					try {
@@ -166,6 +169,9 @@ public class SpringServletContainerInitializer implements ServletContainerInitia
 		servletContext.log(initializers.size() + " Spring WebApplicationInitializers detected on classpath");
 		AnnotationAwareOrderComparator.sort(initializers);
 		for (WebApplicationInitializer initializer : initializers) {
+			// <2>spring 与我们之前的 demo 不同，并没有在 SpringServletContainerInitializer 中直接对 servlet 和 filter 进行注册，
+			// 而是委托给了一个陌生的类 org.springframework.web.WebApplicationInitializer 。
+			// WebApplicationInitializer 类便是 spring 用来初始化 web 环境的委托者类
 			initializer.onStartup(servletContext);
 		}
 	}

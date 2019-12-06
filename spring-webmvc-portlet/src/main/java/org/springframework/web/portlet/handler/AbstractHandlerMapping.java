@@ -126,7 +126,9 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport im
 	 */
 	@Override
 	protected void initApplicationContext() throws BeansException {
+		// <1> 空方法。交给子类实现，用于注册自定义的拦截器到 interceptors 中。目前暂无子类实现。
 		extendInterceptors(this.interceptors);
+		// <3> 将 interceptors 初始化成 HandlerInterceptor 类型，添加到 mappedInterceptors 中
 		initInterceptors();
 	}
 
@@ -151,11 +153,15 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport im
 	protected void initInterceptors() {
 		if (!this.interceptors.isEmpty()) {
 			this.adaptedInterceptors = new HandlerInterceptor[this.interceptors.size()];
+			// 遍历 interceptors 数组
 			for (int i = 0; i < this.interceptors.size(); i++) {
+				// 获得 interceptor 对象
 				Object interceptor = this.interceptors.get(i);
 				if (interceptor == null) {
 					throw new IllegalArgumentException("Entry number " + i + " in interceptors array is null");
 				}
+				// 将 interceptors 初始化成 HandlerInterceptor 类型，添加到 mappedInterceptors 中
+				// 注意，HandlerInterceptor 无需进行路径匹配，直接拦截全部
 				this.adaptedInterceptors[i] = adaptInterceptor(interceptor);
 			}
 		}
@@ -174,13 +180,16 @@ public abstract class AbstractHandlerMapping extends ApplicationObjectSupport im
 	 * @see WebRequestHandlerInterceptorAdapter
 	 */
 	protected HandlerInterceptor adaptInterceptor(Object interceptor) {
+		// HandlerInterceptor 类型，直接返回
 		if (interceptor instanceof HandlerInterceptor) {
 			return (HandlerInterceptor) interceptor;
 		}
+		// WebRequestInterceptor 类型，适配成 WebRequestHandlerInterceptorAdapter 对象，然后返回
 		else if (interceptor instanceof WebRequestInterceptor) {
 			return new WebRequestHandlerInterceptorAdapter(
 					(WebRequestInterceptor) interceptor, this.applyWebRequestInterceptorsToRenderPhaseOnly);
 		}
+		// 错误类型，抛出 IllegalArgumentException 异常
 		else {
 			throw new IllegalArgumentException("Interceptor type not supported: " + interceptor.getClass().getName());
 		}

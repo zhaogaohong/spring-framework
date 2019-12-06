@@ -57,6 +57,7 @@ import org.springframework.web.servlet.FrameworkServlet;
  * @author Stephane Nicoll
  * @since 3.2
  */
+//便是无 web.xml 前提下创建 DispatcherServlet 的关键代码
 public abstract class AbstractDispatcherServletInitializer extends AbstractContextLoaderInitializer {
 
 	/**
@@ -67,7 +68,9 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 
 	@Override
 	public void onStartup(ServletContext servletContext) throws ServletException {
+		// 调用父类启动的逻辑
 		super.onStartup(servletContext);
+		// 注册 DispacherServlt
 		registerDispatcherServlet(servletContext);
 	}
 
@@ -83,14 +86,15 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	 * @param servletContext the context to register the servlet against
 	 */
 	protected void registerDispatcherServlet(ServletContext servletContext) {
+		// 获得 Servlet 名
 		String servletName = getServletName();
 		Assert.hasLength(servletName, "getServletName() must not return empty or null");
-
+		// <1> 创建 WebApplicationContext 对象
 		WebApplicationContext servletAppContext = createServletApplicationContext();
 		Assert.notNull(servletAppContext,
 				"createServletApplicationContext() did not return an application " +
 				"context for servlet [" + servletName + "]");
-
+		// <2> 创建 FrameworkServlet 对象
 		FrameworkServlet dispatcherServlet = createDispatcherServlet(servletAppContext);
 		dispatcherServlet.setContextInitializers(getServletApplicationContextInitializers());
 
@@ -102,7 +106,7 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 		registration.setLoadOnStartup(1);
 		registration.addMapping(getServletMappings());
 		registration.setAsyncSupported(isAsyncSupported());
-
+		// <3> 注册过滤器
 		Filter[] filters = getServletFilters();
 		if (!ObjectUtils.isEmpty(filters)) {
 			for (Filter filter : filters) {

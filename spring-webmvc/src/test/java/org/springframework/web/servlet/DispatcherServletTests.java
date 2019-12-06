@@ -112,6 +112,23 @@ public class DispatcherServletTests {
 
 	@Test
 	public void configuredDispatcherServlets() {
+		//在开始之前，我们还是回过头看一眼 web.xml 的配置。代码如下：
+//				<servlet>
+//					<servlet-name>spring</servlet-name>
+//					<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+//					<!-- 可以自定义servlet.xml配置文件的位置和名称，默认为WEB-INF目录下，名称为[<servlet-name>]-servlet.xml，如spring-servlet.xml
+//						<init-param>
+//						<param-name>contextConfigLocation</param-name>
+//						<param-value>/WEB-INF/spring-servlet.xml</param-value> // 默认
+//					</init-param>
+//										-->
+//					<load-on-startup>1</load-on-startup>
+//				</servlet>
+//				<servlet-mapping>
+//					<servlet-name>spring</servlet-name>
+//					<url-pattern>*.do</url-pattern>
+//				</servlet-mapping>
+		//即， Servlet WebApplicationContext 容器的初始化，是在 DispatcherServlet 初始化的过程中执行。
 		assertTrue("Correct namespace",
 				("simple" + FrameworkServlet.DEFAULT_NAMESPACE_SUFFIX).equals(simpleDispatcherServlet.getNamespace()));
 		assertTrue("Correct attribute", (FrameworkServlet.SERVLET_CONTEXT_PREFIX + "simple").equals(

@@ -143,11 +143,15 @@ public class HandlerExecutionChain {
 	/**
 	 * Apply postHandle methods of registered interceptors.
 	 */
+	//应用拦截器的后置处理
 	void applyPostHandle(HttpServletRequest request, HttpServletResponse response, ModelAndView mv) throws Exception {
+		// 获得拦截器数组
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
-			for (int i = interceptors.length - 1; i >= 0; i--) {
+			// 遍历拦截器数组
+			for (int i = interceptors.length - 1; i >= 0; i--) { // 倒序
 				HandlerInterceptor interceptor = interceptors[i];
+				// 后置处理
 				interceptor.postHandle(request, response, this.handler, mv);
 			}
 		}
@@ -160,15 +164,17 @@ public class HandlerExecutionChain {
 	 */
 	void triggerAfterCompletion(HttpServletRequest request, HttpServletResponse response, Exception ex)
 			throws Exception {
-
+		// 获得拦截器数组
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
-			for (int i = this.interceptorIndex; i >= 0; i--) {
+			// 遍历拦截器数组
+			for (int i = this.interceptorIndex; i >= 0; i--) { // 倒序！！！
 				HandlerInterceptor interceptor = interceptors[i];
 				try {
+					// 已完成处理
 					interceptor.afterCompletion(request, response, this.handler, ex);
 				}
-				catch (Throwable ex2) {
+				catch (Throwable ex2) {// 注意，如果执行失败，仅仅会打印错误日志，不会结束循环
 					logger.error("HandlerInterceptor.afterCompletion threw exception", ex2);
 				}
 			}

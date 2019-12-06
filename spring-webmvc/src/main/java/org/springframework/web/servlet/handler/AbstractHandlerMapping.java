@@ -244,6 +244,15 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	@Override
 	protected void initApplicationContext() throws BeansException {
 		extendInterceptors(this.interceptors);
+		//会扫描 MappedInterceptor Bean
+		//<mvc:interceptors>
+		//    <mvc:interceptor>
+		//        <mvc:mapping path="/interceptor/**" />
+		//        <mvc:exclude-mapping path="/interceptor/b/*" />
+		//        <bean class="com.elim.learn.spring.mvc.interceptor.MyInterceptor" />
+		//    </mvc:interceptor>
+		//</mvc:interceptors>
+		//org.springframework.web.servlet.config.InterceptorsBeanDefinitionParser 解析成 「4.1 MappedInterceptor」 对象，注册到 Spring IOC 容器中
 		detectMappedInterceptors(this.adaptedInterceptors);
 		initInterceptors();
 	}
@@ -349,26 +358,31 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 */
 	@Override
 	public final HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
+		// <1> 获得处理器。该方法是抽象方法，由子类实现
 		Object handler = getHandlerInternal(request);
+		// <2> 获得不到，则使用默认处理器
 		if (handler == null) {
 			handler = getDefaultHandler();
 		}
+		// <3> 还是获得不到，则返回 null
 		if (handler == null) {
 			return null;
 		}
-		// Bean name or resolved handler?
+		// <4> 如果找到的处理器是 String 类型，则从容器中找到 String 对应的 Bean 类型作为处理器。
 		if (handler instanceof String) {
 			String handlerName = (String) handler;
 			handler = getApplicationContext().getBean(handlerName);
 		}
-
+		// <5> 获得 HandlerExecutionChain 对象
 		HandlerExecutionChain executionChain = getHandlerExecutionChain(handler, request);
+		// <6> TODO
 		if (CorsUtils.isCorsRequest(request)) {
 			CorsConfiguration globalConfig = this.globalCorsConfigSource.getCorsConfiguration(request);
 			CorsConfiguration handlerConfig = getCorsConfiguration(handler, request);
 			CorsConfiguration config = (globalConfig != null ? globalConfig.combine(handlerConfig) : handlerConfig);
 			executionChain = getCorsHandlerExecutionChain(request, executionChain, config);
 		}
+		// <7> 返回
 		return executionChain;
 	}
 
@@ -411,11 +425,14 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 * @see #getAdaptedInterceptors()
 	 */
 	protected HandlerExecutionChain getHandlerExecutionChain(Object handler, HttpServletRequest request) {
+		// 创建 HandlerExecutionChain 对象
 		HandlerExecutionChain chain = (handler instanceof HandlerExecutionChain ?
 				(HandlerExecutionChain) handler : new HandlerExecutionChain(handler));
-
+		// 获得请求路径
 		String lookupPath = this.urlPathHelper.getLookupPathForRequest(request);
+		// 遍历 adaptedInterceptors 数组，获得请求匹配的拦截器
 		for (HandlerInterceptor interceptor : this.adaptedInterceptors) {
+			// 需要匹配，若路径匹配，则添加到 chain 中
 			if (interceptor instanceof MappedInterceptor) {
 				MappedInterceptor mappedInterceptor = (MappedInterceptor) interceptor;
 				if (mappedInterceptor.matches(lookupPath, this.pathMatcher)) {
@@ -423,6 +440,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 				}
 			}
 			else {
+				// 无需匹配，直接添加到 chain 中
 				chain.addInterceptor(interceptor);
 			}
 		}

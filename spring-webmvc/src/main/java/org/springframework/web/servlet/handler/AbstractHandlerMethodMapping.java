@@ -88,7 +88,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	private boolean detectHandlerMethodsInAncestorContexts = false;
 
 	private HandlerMethodMappingNamingStrategy<T> namingStrategy;
-
+	//Mapping 注册表
 	private final MappingRegistry mappingRegistry = new MappingRegistry();
 
 
@@ -116,7 +116,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	}
 
 	/**
-	 * Return the configured naming strategy or {@code null}.
+	 * Mapping 命名策略
 	 */
 	public HandlerMethodMappingNamingStrategy<T> getNamingStrategy() {
 		return this.namingStrategy;
