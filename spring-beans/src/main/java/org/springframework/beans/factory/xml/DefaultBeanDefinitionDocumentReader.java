@@ -329,18 +329,50 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * and registering it with the registry.
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
+		// 将 <bean /> 节点中的信息提取出来，然后封装到一个 BeanDefinitionHolder 中，细节往下看
+		//继续往下看怎么解析之前，我们先看下 <bean /> 标签中可以定义哪些属性：
+//		Property
+//		class	类的全限定名
+//		name	可指定 id、name(用逗号、分号、空格分隔)
+//		scope	作用域
+//		constructor arguments	指定构造参数
+//		properties	设置属性的值
+//		autowiring mode	no(默认值)、byName、byType、 constructor
+//		lazy-initialization mode	是否懒加载(如果被非懒加载的bean依赖了那么其实也就不能懒加载了)
+//		initialization method	bean 属性设置完成后，会调用这个方法
+//		destruction method	bean 销毁后的回调方法
+		//上面表格中的内容我想大家都非常熟悉吧，如果不熟悉，那就是你不够了解 Spring 的配置了。
+//			<bean id="exampleBean" name="name1, name2, name3" class="com.javadoop.ExampleBean"
+//			scope="singleton" lazy-init="true" init-method="init" destroy-method="cleanup">
+//				<!-- 可以用下面三种形式指定构造参数 -->
+//				<constructor-arg type="int" value="7500000"/>
+//				<constructor-arg name="years" value="7500000"/>
+//				<constructor-arg index="0" value="7500000"/>
+//
+//				<!-- property 的几种情况 -->
+//				<property name="beanOne">
+//					<ref bean="anotherExampleBean"/>
+//				</property>
+//				<property name="beanTwo" ref="yetAnotherBean"/>
+//				<property name="integerProperty" value="1"/>
+//			</bean>
+	//	当然，除了上面举例出来的这些，还有 factory-bean、factory-method、<lockup-method />、<replaced-method />、<meta />、<qualifier />
+		//	这几个，大家是不是熟悉呢？自己检验一下自己对 Spring 中 bean 的了解程度。
+		//有了以上这些知识以后，我们再继续往里看怎么解析 bean 元素，是怎么转换到 BeanDefinitionHolder 的。
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
+		// 下面的几行先不要看，跳过先，跳过先，跳过先，后面会继续说的
 		if (bdHolder != null) {
+			// 如果有自定义属性的话，进行相应的解析，先忽略
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
-				// Register the final decorated instance.
+				// 我们把这步叫做 注册Bean 吧
 				BeanDefinitionReaderUtils.registerBeanDefinition(bdHolder, getReaderContext().getRegistry());
 			}
 			catch (BeanDefinitionStoreException ex) {
 				getReaderContext().error("Failed to register bean definition with name '" +
 						bdHolder.getBeanName() + "'", ele, ex);
 			}
-			// Send registration event.
+			// 注册完成后，发送事件，本文不展开说这个
 			getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));
 		}
 	}
