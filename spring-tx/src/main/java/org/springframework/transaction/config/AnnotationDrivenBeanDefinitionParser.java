@@ -54,6 +54,7 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 	 * Parses the {@code <tx:annotation-driven/>} tag. Will
 	 * {@link AopNamespaceUtils#registerAutoProxyCreatorIfNecessary register an AutoProxyCreator}
 	 * with the container as necessary.
+	 * 解析annotation-driven开头的标签--> {@code <tx:annotation-driven/>} tag.
 	 */
 	@Override
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
