@@ -80,11 +80,13 @@ public class ClassPathXmlApplicationContextTests {
 		ctx.close();
 	}
 
+	//看这个方法
 	@Test
 	public void testSingleConfigLocation2() {
+		//1.初始化IOC容器
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(CONTEXT_D);
 		System.out.println("context 启动成功");
-		// 从 context 中取出我们的 Bean，而不是用 new MessageServiceImpl() 这种方式
+		// 2.从 context 中取出我们的 Bean，而不是用 new MessageServiceImpl() 这种方式
 		MessageService messageService = ctx.getBean(MessageService.class);
 		// 这句将输出: hello world
 		System.out.println(messageService.getMessage());

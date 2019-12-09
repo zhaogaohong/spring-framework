@@ -508,7 +508,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public void refresh() throws BeansException, IllegalStateException {
 		//来个锁，不然 refresh() 还没结束，你又来个启动或销毁容器的操作，那不就乱套了嘛
 		synchronized (this.startupShutdownMonitor) {
-			// 1、准备工作，记录下容器的启动时间、标记“已启动”状态、处理配置文件中的占位符
+			// 1、准备工作，记录下容器的启动时间、标记“已启动”状态、处理配置文件中的占位符、校验配置文件
 			prepareRefresh();
 
 			// 2、这步比较关键，这步完成后，配置文件就会解析成一个个 Bean 定义，注册到 BeanFactory 中，
@@ -599,7 +599,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Switch to active.
 		//记录启动时间
 		this.startupDate = System.currentTimeMillis();
+		//容器关闭状态设置
 		this.closed.set(false);
+		//容器激活状态这只
 		this.active.set(true);
 
 		if (logger.isInfoEnabled()) {
@@ -635,9 +637,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see #getBeanFactory()
 	 */
 	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
-		//关闭旧的 BeanFactory (如果有)，创建新的 BeanFactory，加载 Bean 定义、注册 Bean 等等
+		//1.关闭旧的 BeanFactory (如果有)，创建新的 BeanFactory，加载 Bean 定义、注册 Bean 等等
 		refreshBeanFactory();
-		//返回刚刚创建的 BeanFactory
+		//2.返回刚刚创建的 BeanFactory
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
 		if (logger.isDebugEnabled()) {
 			logger.debug("Bean factory for " + getDisplayName() + ": " + beanFactory);

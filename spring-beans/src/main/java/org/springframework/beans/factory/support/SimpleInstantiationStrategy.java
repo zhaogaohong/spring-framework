@@ -59,9 +59,11 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 	public Object instantiate(RootBeanDefinition bd, String beanName, BeanFactory owner) {
 		// 如果不存在方法覆写，那就使用 java 反射进行实例化，否则使用 CGLIB,
 		// 方法覆写 请参见附录"方法注入"中对 lookup-method 和 replaced-method 的介绍
+		// 没有覆盖，直接使用反射实例化即可
 		if (bd.getMethodOverrides().isEmpty()) {
 			Constructor<?> constructorToUse;
 			synchronized (bd.constructorArgumentLock) {
+				// 获得构造方法 constructorToUse
 				constructorToUse = (Constructor<?>) bd.resolvedConstructorOrFactoryMethod;
 				if (constructorToUse == null) {
 					final Class<?> clazz = bd.getBeanClass();
@@ -69,6 +71,7 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 						throw new BeanInstantiationException(clazz, "Specified class is an interface");
 					}
 					try {
+						// 从 clazz 中，获得构造方法
 						if (System.getSecurityManager() != null) {
 							constructorToUse = AccessController.doPrivileged(new PrivilegedExceptionAction<Constructor<?>>() {
 								@Override
@@ -80,6 +83,7 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 						else {
 							constructorToUse =	clazz.getDeclaredConstructor((Class[]) null);
 						}
+						// 标记 resolvedConstructorOrFactoryMethod 属性
 						bd.resolvedConstructorOrFactoryMethod = constructorToUse;
 					}
 					catch (Throwable ex) {
@@ -88,11 +92,13 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 				}
 			}
 			// 利用构造方法进行实例化
+			// 通过 BeanUtils 直接使用构造器对象实例化 Bean 对象
 			return BeanUtils.instantiateClass(constructorToUse);
 		}
 		else {
 			// 存在方法覆写，利用 CGLIB 来完成实例化，需要依赖于 CGLIB 生成子类，这里就不展开了。
 			// tips: 因为如果不使用 CGLIB 的话，存在 override 的情况 JDK 并没有提供相应的实例化支持
+			// 生成 CGLIB 创建的子类对象
 			return instantiateWithMethodInjection(bd, beanName, owner);
 		}
 	}
@@ -110,10 +116,12 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 	@Override
 	public Object instantiate(RootBeanDefinition bd, String beanName, BeanFactory owner,
 			final Constructor<?> ctor, Object... args) {
-
+		// <x1> 没有覆盖，直接使用反射实例化即可
+		//如果该 bean 没有配置 lookup-method、replaced-method 标签或者 @Lookup 注解，则直接通过反射的方式实例化 Bean 对象即可
+		//如果存在需要覆盖的方法或者动态替换的方法时，则需要使用 CGLIB 进行动态代理，因为可以在创建代理的同时将动态方法织入类中
 		if (bd.getMethodOverrides().isEmpty()) {
 			if (System.getSecurityManager() != null) {
-				// use own privileged to change accessibility (when security is on)
+				// 设置构造方法，可访问
 				AccessController.doPrivileged(new PrivilegedAction<Object>() {
 					@Override
 					public Object run() {
@@ -122,9 +130,11 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 					}
 				});
 			}
+			// 通过 BeanUtils 直接使用构造器对象实例化 Bean 对象
 			return BeanUtils.instantiateClass(ctor, args);
 		}
 		else {
+			// <x2> 生成 CGLIB 创建的子类对象
 			return instantiateWithMethodInjection(bd, beanName, owner, ctor, args);
 		}
 	}

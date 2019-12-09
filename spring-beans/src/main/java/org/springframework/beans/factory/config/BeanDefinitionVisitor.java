@@ -74,6 +74,8 @@ public class BeanDefinitionVisitor {
 	 * @see #resolveStringValue(String)
 	 */
 	public void visitBeanDefinition(BeanDefinition beanDefinition) {
+		//我们可以看到该方法基本访问了 BeanDefinition 中所有值得访问的东西了，
+		// 包括 parent 、class 、factory-bean 、factory-method 、scope 、property 、constructor-arg 。
 		visitParentName(beanDefinition);
 		visitBeanClassName(beanDefinition);
 		visitFactoryBeanName(beanDefinition);
@@ -136,10 +138,13 @@ public class BeanDefinitionVisitor {
 	}
 
 	protected void visitPropertyValues(MutablePropertyValues pvs) {
+		// 遍历 PropertyValue 数组
 		PropertyValue[] pvArray = pvs.getPropertyValues();
 		for (PropertyValue pv : pvArray) {
+			// 解析真值
 			Object newVal = resolveValue(pv.getValue());
 			if (!ObjectUtils.nullSafeEquals(newVal, pv.getValue())) {
+				// 设置到 PropertyValue 中
 				pvs.add(pv.getName(), newVal);
 			}
 		}
@@ -279,6 +284,7 @@ public class BeanDefinitionVisitor {
 			throw new IllegalStateException("No StringValueResolver specified - pass a resolver " +
 					"object into the constructor or override the 'resolveStringValue' method");
 		}
+		// 解析真值
 		String resolvedValue = this.valueResolver.resolveStringValue(strVal);
 		// Return original String if not modified.
 		return (strVal.equals(resolvedValue) ? strVal : resolvedValue);

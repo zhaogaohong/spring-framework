@@ -177,11 +177,11 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 	public int loadBeanDefinitions(Resource... resources) throws BeanDefinitionStoreException {
 		Assert.notNull(resources, "Resource array must not be null");
 		int counter = 0;
-		// 注意这里是个 for 循环，也就是每个文件是一个 resource
+		// 1.注意这里是个 for 循环，也就是每个文件是一个 resource
 		for (Resource resource : resources) {
 			counter += loadBeanDefinitions(resource);
 		}
-		// 最后返回 counter，表示总共加载了多少的 BeanDefinition
+		// 2.最后返回 counter，表示总共加载了多少的 BeanDefinition
 		return counter;
 	}
 
@@ -206,6 +206,7 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 	 * @see #loadBeanDefinitions(org.springframework.core.io.Resource[])
 	 */
 	public int loadBeanDefinitions(String location, Set<Resource> actualResources) throws BeanDefinitionStoreException {
+		// 获得 ResourceLoader 对象
 		ResourceLoader resourceLoader = getResourceLoader();
 		if (resourceLoader == null) {
 			throw new BeanDefinitionStoreException(
@@ -215,8 +216,11 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 		if (resourceLoader instanceof ResourcePatternResolver) {
 			// Resource pattern matching available.
 			try {
+				// 获得 Resource 数组，因为 Pattern 模式匹配下，可能有多个 Resource 。例如说，Ant 风格的 location
 				Resource[] resources = ((ResourcePatternResolver) resourceLoader).getResources(location);
+				// 加载 BeanDefinition 们
 				int loadCount = loadBeanDefinitions(resources);
+				// 添加到 actualResources 中
 				if (actualResources != null) {
 					for (Resource resource : resources) {
 						actualResources.add(resource);
@@ -233,9 +237,11 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 			}
 		}
 		else {
-			// Can only load single resources by absolute URL.
+			// 获得 Resource 对象，
 			Resource resource = resourceLoader.getResource(location);
+			// 加载 BeanDefinition 们
 			int loadCount = loadBeanDefinitions(resource);
+			// 添加到 actualResources 中
 			if (actualResources != null) {
 				actualResources.add(resource);
 			}

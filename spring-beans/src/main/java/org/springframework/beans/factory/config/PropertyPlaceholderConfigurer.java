@@ -56,6 +56,7 @@ import org.springframework.util.StringValueResolver;
  * @see PropertyOverrideConfigurer
  * @see org.springframework.context.support.PropertySourcesPlaceholderConfigurer
  */
+//PropertyPlaceholderConfigurer 允许我们用 Properties 文件中的属性，来定义应用上下文（配置文件或者注解）。
 public class PropertyPlaceholderConfigurer extends PlaceholderConfigurerSupport {
 
 	/** Never check system properties. */
@@ -205,8 +206,9 @@ public class PropertyPlaceholderConfigurer extends PlaceholderConfigurerSupport 
 	@Override
 	protected void processProperties(ConfigurableListableBeanFactory beanFactoryToProcess, Properties props)
 			throws BeansException {
-
+		// <1> 创建 StringValueResolver 对象
 		StringValueResolver valueResolver = new PlaceholderResolvingStringValueResolver(props);
+		// <2> 处理
 		doProcessProperties(beanFactoryToProcess, valueResolver);
 	}
 
