@@ -68,6 +68,13 @@ package org.springframework.core.env;
  * @see org.springframework.context.ConfigurableApplicationContext#setEnvironment
  * @see org.springframework.context.support.AbstractApplicationContext#createEnvironment
  */
+// Environment 对象的作用，是确定哪些配置文件（如果有）当前处于活动状态，以及默认情况下哪些配置文件（如果有）应处于活动状态
+	//properties 的方法由 PropertyResolver 定义。
+		//	profile 则表示当前的运行环境，对于应用程序中的 properties 而言，并不是所有的都会加载到系统中，只有其属性与 profile 一直才会被激活加载，
+//	PropertySource：属性源，key-value 属性对抽象，用于配置数据。
+	//		PropertyResolver：属性解析器，用于解析属性配置
+	//		Profile：剖面，只有激活的剖面的组件/配置才会注册到 Spring 容器，类似于 Spring Boot 中的 profile 。
+	//		Environment：环境，Profile 和 PropertyResolver 的组合。
 public interface Environment extends PropertyResolver {
 
 	/**
@@ -83,6 +90,7 @@ public interface Environment extends PropertyResolver {
 	 * @see ConfigurableEnvironment#setActiveProfiles
 	 * @see AbstractEnvironment#ACTIVE_PROFILES_PROPERTY_NAME
 	 */
+	// 返回此环境下激活的配置文件集
 	String[] getActiveProfiles();
 
 	/**
@@ -92,6 +100,7 @@ public interface Environment extends PropertyResolver {
 	 * @see ConfigurableEnvironment#setDefaultProfiles
 	 * @see AbstractEnvironment#DEFAULT_PROFILES_PROPERTY_NAME
 	 */
+	// 如果未设置激活配置文件，则返回默认的激活的配置文件集
 	String[] getDefaultProfiles();
 
 	/**

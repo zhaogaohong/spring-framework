@@ -57,10 +57,10 @@ public abstract class TypeConverterSupport extends PropertyEditorRegistrySupport
 	private <T> T doConvert(Object value, Class<T> requiredType, MethodParameter methodParam, Field field)
 			throws TypeMismatchException {
 		try {
-			if (field != null) {
+			if (field != null) { // field
 				return this.typeConverterDelegate.convertIfNecessary(value, requiredType, field);
 			}
-			else {
+			else { // methodParam
 				return this.typeConverterDelegate.convertIfNecessary(value, requiredType, methodParam);
 			}
 		}

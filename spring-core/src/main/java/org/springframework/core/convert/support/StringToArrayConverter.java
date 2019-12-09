@@ -55,12 +55,15 @@ final class StringToArrayConverter implements ConditionalGenericConverter {
 		if (source == null) {
 			return null;
 		}
+		// 按照 , 分隔成字符串数组
 		String string = (String) source;
 		String[] fields = StringUtils.commaDelimitedListToStringArray(string);
 		Object target = Array.newInstance(targetType.getElementTypeDescriptor().getType(), fields.length);
 		for (int i = 0; i < fields.length; i++) {
 			String sourceElement = fields[i];
+			// 创建目标数组
 			Object targetElement = this.conversionService.convert(sourceElement.trim(), sourceType, targetType.getElementTypeDescriptor());
+			// 设置到 target 中
 			Array.set(target, i, targetElement);
 		}
 		return target;
