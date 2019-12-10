@@ -164,6 +164,12 @@ public class ContextLoader {
 
 	private static final Properties defaultStrategies;
 
+	/**
+	 * 静态代码加载默认策略,即默认的web应用上下文
+	 * DEFAULT_STRATEGIES_PATH --> ContextLoader.properties
+	 *
+	 * org.springframework.web.context.WebApplicationContext=org.springframework.web.context.support.XmlWebApplicationContext
+	 */
 	static {
 		// Load default strategy implementations from properties file.
 		// This is currently strictly internal and not meant to be customized
@@ -171,6 +177,8 @@ public class ContextLoader {
 		try {
 			ClassPathResource resource = new ClassPathResource(DEFAULT_STRATEGIES_PATH, ContextLoader.class);
 			defaultStrategies = PropertiesLoaderUtils.loadProperties(resource);
+			//很简单，通过上面的操作，我们就可以确定contextClassName是XmlWebApplicationContext，跟我们之前分析的ApplicationContext差不多，
+			// 只是在其基础上又提供了对web的支持。接下来通过BeanUtils.instantiateClass(contextClass)将其实例化即可。
 		}
 		catch (IOException ex) {
 			throw new IllegalStateException("Could not load 'ContextLoader.properties': " + ex.getMessage());
@@ -310,24 +318,29 @@ public class ContextLoader {
 		long startTime = System.currentTimeMillis();
 
 		try {
+			// 将上下文存储在本地实例变量中，以确保它在ServletContext关闭时可用。
 			if (this.context == null) {
 
 				// <3> 初始化 context ，即创建 context 对象,这里是非MVC相关的容器初始化
+				// 1.创建web应用上线文环境
 				this.context = createWebApplicationContext(servletContext);
 			}
 			// <4> 如果是 ConfigurableWebApplicationContext 的子类，如果未刷新，则进行配置和刷新
 			if (this.context instanceof ConfigurableWebApplicationContext) {
 				ConfigurableWebApplicationContext cwac = (ConfigurableWebApplicationContext) this.context;
+				// 如果当前上下文环境未激活，那么其只能提供例如设置父上下文、设置上下文id等功能
 				if (!cwac.isActive()) {  // <4.1> 未刷新( 激活 ) 默认情况下，是符合这个条件的，所以会往下执行
 					if (cwac.getParent() == null) {// <4.2> 无父容器，则进行加载
 						ApplicationContext parent = loadParentContext(servletContext);
 						cwac.setParent(parent);
 					}
 					// <4.3> 配置 ConfigurableWebApplicationContext 对象，并进行刷新,生成IOC容器 重点
+					// 2.配置并刷新当前上下文环境
 					configureAndRefreshWebApplicationContext(cwac, servletContext);
 				}
 			}
 			// <5> 记录在 servletContext 中
+			// 将当前上下文环境存储到ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE变量中
 			servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, this.context);
 			// <6> 记录到 currentContext 或 currentContextPerThread 中
 			ClassLoader ccl = Thread.currentThread().getContextClassLoader();
@@ -375,14 +388,14 @@ public class ContextLoader {
 	 * @see ConfigurableWebApplicationContext
 	 */
 	protected WebApplicationContext createWebApplicationContext(ServletContext sc) {
-		// <1> 获得 context 的类
+		// <1> 获得 context 的类     // 1.确定实例化WebApplicationContext所需的类
 		Class<?> contextClass = determineContextClass(sc);
 		// <2> 判断 context 的类，是否符合 ConfigurableWebApplicationContext 的类型，显然，XmlWebApplicationContext 是符合条件
 		if (!ConfigurableWebApplicationContext.class.isAssignableFrom(contextClass)) {
 			throw new ApplicationContextException("Custom context class [" + contextClass.getName() +
 					"] is not of type [" + ConfigurableWebApplicationContext.class.getName() + "]");
 		}
-		// <3> 创建 context 的类的对象
+		// <3> 创建 context 的类的对象     // 2.实例化得到的WebApplicationContext类
 		return (ConfigurableWebApplicationContext) BeanUtils.instantiateClass(contextClass);
 	}
 
@@ -394,10 +407,30 @@ public class ContextLoader {
 	 * @see #CONTEXT_CLASS_PARAM
 	 * @see org.springframework.web.context.support.XmlWebApplicationContext
 	 */
+	/**
+	 *  * 返回WebApplicationContext（web应用上线文环境）实现类
+ * 如果没有自定义默认返回XmlWebApplicationContext类
+ *
+		 * 两种方式：
+			* 1。非自定义：通过ContextLoader类的静态代码块加载ContextLoader.properties配置文件并解析，该配置文件中的默认类即XmlWebApplicationContext
+ * 2。自定义： 通过在web.xml文件中，配置context-param节点，并配置param-name为contextClass的自己点，如
+ *      <context-param>
+			*          <param-name>contextClass</param-name>
+			*          <param-value>org.springframework.web.context.support.MyWebApplicationContext</param-value>
+			*      </context-param>
+			*
+			* Return the WebApplicationContext implementation class to use, either the
+ * default XmlWebApplicationContext or a custom context class if specified.
+ * @param servletContext current servlet context
+ * @return the WebApplicationContext implementation class to use
+ * @see #CONTEXT_CLASS_PARAM
+ * @see org.springframework.web.context.support.XmlWebApplicationContext
+ */
 	protected Class<?> determineContextClass(ServletContext servletContext) {
 		// 获得参数 contextClass 的值
 		String contextClassName = servletContext.getInitParameter(CONTEXT_CLASS_PARAM);
 		// 情况一，如果值非空，则获得该类 从 ServletContext 配置的 context 类
+		// 1.自定义
 		if (contextClassName != null) {
 			try {
 				return ClassUtils.forName(contextClassName, ClassUtils.getDefaultClassLoader());
@@ -407,8 +440,10 @@ public class ContextLoader {
 						"Failed to load custom context class [" + contextClassName + "]", ex);
 			}
 		}
+		// 2.默认
 		// 情况二，从 defaultStrategies 获得该类 ContextLoader.properties 配置的 context 类,即 XmlWebApplicationContext 类,默认情况
 		else {
+			// 根据静态代码块的加载这里 contextClassName = XmlWebApplicationContext
 			contextClassName = defaultStrategies.getProperty(WebApplicationContext.class.getName());
 			try {
 				return ClassUtils.forName(contextClassName, ContextLoader.class.getClassLoader());
@@ -420,10 +455,22 @@ public class ContextLoader {
 		}
 	}
 
+	/**
+	 * 配置并刷新当前web应用上下文
+	 */
 	protected void configureAndRefreshWebApplicationContext(ConfigurableWebApplicationContext wac, ServletContext sc) {
 		// <1> 如果 context 使用了默认编号，则重新设置 id 属性
 		//默认情况下，我们不会对 wac 设置编号，所以会执行进去。而实际上，id 的生成规则，
 		// 也分成使用 contextId 在 <context-param /> 标签中设置，和自动生成两种情况。😈 默认情况下，会走第二种情况。
+		/**
+		 * 1.配置应用程序上下文id
+		 * 如果当前应用程序上下文id仍然设置为其原始默认值,则尝试为其设置自定义上下文id，如果有的话。
+		 * 在web.xml中配置
+		 * <context-param>
+		 *      <param-name>contextId</param-name>
+		 *      <param-value>jack-2019-01-02</param-value>
+		 *  </context-param>
+		 */
 		if (ObjectUtils.identityToString(wac).equals(wac.getId())) {
 			// 情况一，使用 contextId 属性
 			String idParam = sc.getInitParameter(CONTEXT_ID_PARAM);
@@ -431,7 +478,7 @@ public class ContextLoader {
 				wac.setId(idParam);
 			}
 			else {
-				// 情况二，自动生成
+				// 情况二，自动生成         // 无自定义id则为其生成默认id
 				wac.setId(ConfigurableWebApplicationContext.APPLICATION_CONTEXT_ID_PREFIX +
 						ObjectUtils.getDisplayString(sc.getContextPath()));
 			}
@@ -443,6 +490,13 @@ public class ContextLoader {
 //		<param-name>contextConfigLocation</param-name>
 //		<param-value>classpath:config/applicationContext.xml</param-value>
 //		</context-param>
+		/**
+		 * 2.设置配置文件路径，如
+		 * <context-param>
+		 *      <param-name>contextConfigLocation</param-name>
+		 *      <param-value>classpath:spring-context.xml</param-value>
+		 *  </context-param>
+		 */
 		String configLocationParam = sc.getInitParameter(CONFIG_LOCATION_PARAM);
 		if (configLocationParam != null) {
 			wac.setConfigLocation(configLocationParam);
@@ -452,9 +506,9 @@ public class ContextLoader {
 		if (env instanceof ConfigurableWebEnvironment) {
 			((ConfigurableWebEnvironment) env).initPropertySources(sc, null);
 		}
-		// <5> 执行自定义初始化 context
+		// <5> 执行自定义初始化 context     // 4.自定义配置上下文环境
 		customizeContext(sc, wac);
-		// 刷新 context ，执行初始化,此处，就会进行一些的 Spring 容器的初始化
+		// 刷新 context ，执行初始化,此处，就会进行一些的 Spring 容器的初始化     // 5.刷新上下文环境
 		wac.refresh();
 	}
 
@@ -476,6 +530,19 @@ public class ContextLoader {
 	 * @see ApplicationContextInitializer#initialize(ConfigurableApplicationContext)
 	 */
 	protected void customizeContext(ServletContext sc, ConfigurableWebApplicationContext wac) {
+		/**
+		 * 加载并实例化web.xml配置文件中的 globalInitializerClasses 和 contextInitializerClasses 配置
+		 *
+		 * globalInitializerClasses 代表所有的web application都会应用
+		 * contextInitializerClasses 代表只有当前的web application会使用
+		 * 例如，在web.xml配置文件中：
+		 *  <context-param>
+		 *      <param-name>contextInitializerClasses</param-name>
+		 *      <param-value>com.lyc.cn.init.MyContextInitializerClasses</param-value>
+		 *  </context-param>
+		 *
+		 *  容器将会调用自定义的initialize方法，其实就在这段代码的下方。。。
+		 */
 		List<Class<ApplicationContextInitializer<ConfigurableApplicationContext>>> initializerClasses =
 				determineContextInitializerClasses(sc);
 
@@ -496,6 +563,14 @@ public class ContextLoader {
 		for (ApplicationContextInitializer<ConfigurableApplicationContext> initializer : this.contextInitializers) {
 			initializer.initialize(wac);
 		}
+
+//		该实现很简单，我们只要在web.xml中自定义contextInitializerClasses和globalInitializerClasses并提供实现类即可：
+//		如：
+//<context-param>
+//    <param-name>contextInitializerClasses</param-name>
+//    <param-value>com.lyc.cn.init.MyContextInitializerClasses</param-value>
+//</context-param>
+
 	}
 
 	/**

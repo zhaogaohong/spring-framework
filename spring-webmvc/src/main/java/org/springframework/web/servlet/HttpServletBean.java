@@ -148,6 +148,13 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 	 * @throws ServletException if bean properties are invalid (or required
 	 * properties are missing), or if subclass initialization fails.
 	 */
+	/**
+	 * DispatcherServlet 初始化入口
+	 * Map config parameters onto bean properties of this servlet, and
+	 * invoke subclass initialization.
+	 * @throws ServletException if bean properties are invalid (or required
+	 * properties are missing), or if subclass initialization fails.
+	 */
 	@Override
 	//负责将 ServletConfig 设置到当前 Servlet 对象中
 	public final void init() throws ServletException {
@@ -156,6 +163,20 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		}
 
 		// <1> 解析 <init-param /> 标签，封装到 PropertyValues pvs 中
+		// Set bean properties from init parameters.
+		/**
+		 * 1.加载初始化参数，如：
+		 * <servlet>
+		 *      <servlet-name>example</servlet-name>
+		 *      <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		 *      <init-param>
+		 *          <param-name>name</param-name>
+		 *          <param-value>jack</param-value>
+		 *      </init-param>
+		 *      <load-on-startup>1</load-on-startup>
+		 *  </servlet>
+		 *  这里会解析init-param列表。
+		 */
 		PropertyValues pvs = new ServletConfigPropertyValues(getServletConfig(), this.requiredProperties);
 		if (!pvs.isEmpty()) {
 			try {
@@ -165,7 +186,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 				ResourceLoader resourceLoader = new ServletContextResourceLoader(getServletContext());
 				// <2.2> 注册自定义属性编辑器，一旦碰到 Resource 类型的属性，将会使用 ResourceEditor 进行解析
 				bw.registerCustomEditor(Resource.class, new ResourceEditor(resourceLoader, getEnvironment()));
-				// <2.3> 空实现，留给子类覆盖
+				// <2.3> 空实现，留给子类覆盖     // 2.留给子类覆盖的模板方法
 				initBeanWrapper(bw);
 				// <2.4> 以 Spring 的方式来将 pvs 注入到该 BeanWrapper 对象中
 				bw.setPropertyValues(pvs, true);

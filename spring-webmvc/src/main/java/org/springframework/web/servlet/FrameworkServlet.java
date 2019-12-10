@@ -493,9 +493,9 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		long startTime = System.currentTimeMillis();
 
 		try {
-			// 1、初始化 WebApplicationContext 对象
+			// 1、初始化 WebApplicationContext 对象         // 为当前servlet初始化web应用上下文
 			this.webApplicationContext = initWebApplicationContext();
-			// 空实现。子类有需要，可以实现该方法，实现自定义逻辑
+			// 空实现。子类有需要，可以实现该方法，实现自定义逻辑         // 空的模板方法
 			initFrameworkServlet();
 		}
 		catch (ServletException ex) {
@@ -525,10 +525,12 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 */
 	protected WebApplicationContext initWebApplicationContext() {
 		// <1> 获得根 WebApplicationContext 对象，这是通过ContextListener初始化的
+		// 获取rootContext，该Context就是通过ContextLoaderListener创建的XmlWebApplicationContext
 		WebApplicationContext rootContext =
 				WebApplicationContextUtils.getWebApplicationContext(getServletContext());
 		WebApplicationContext wac = null;
 		// <2> 获得 WebApplicationContext wac 变量
+		// 如果当前webApplicationContext不为null，则为其设置父容器
 		if (this.webApplicationContext != null) {
 			// 赋值给 wac 变量
 			wac = this.webApplicationContext;
@@ -546,14 +548,17 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			}
 		}
 		// 第二种情况，从 ServletContext 获取对应的 WebApplicationContext 对象
+		// 未能通过构造函数注入，则尝试去ServletContext容器中查找有无WebApplicationContext
 		if (wac == null) {
 			wac = findWebApplicationContext();
 		}
 		// 第三种，创建一个 WebApplicationContext 对象
+		// 以上均无WebApplicationContext，则创建一个新的WebApplicationContext
 		if (wac == null) {
 			wac = createWebApplicationContext(rootContext);
 		}
 		// <3> 如果未触发刷新事件，则主动触发刷新事件
+		// 刷新上下文容器，空的模板方法，留给子类实现
 		if (!this.refreshEventReceived) {
 			//重点重点
 			onRefresh(wac);

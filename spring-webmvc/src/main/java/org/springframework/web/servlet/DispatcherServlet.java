@@ -584,10 +584,18 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * <p>If no HandlerMapping beans are defined in the BeanFactory for this namespace,
 	 * we default to BeanNameUrlHandlerMapping.
 	 */
+	/**
+	 * 实例化HandlerMappings，如果没有自定义HandlerMappings，则默认使用BeanNameUrlHandlerMapping
+	 * Initialize the HandlerMappings used by this class.
+	 * <p>If no HandlerMapping beans are defined in the BeanFactory for this namespace,
+	 * we default to BeanNameUrlHandlerMapping.
+	 */
 	private void initHandlerMappings(ApplicationContext context) {
 		// 置空 handlerMappings
 		this.handlerMappings = null;
 		// <1> 如果开启探测功能，则扫描已注册的 HandlerMapping 的 Bean 们，添加到 handlerMappings 中
+		// 1.如果希望获取所有的HandlerMapping，包括父容器。
+		// detectAllHandlerMappings默认为true
 		if (this.detectAllHandlerMappings) {
 			// 扫描已注册的 HandlerMapping 的 Bean 们
 			Map<String, HandlerMapping> matchingBeans =
@@ -600,6 +608,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			}
 		}
 		// <2> 如果关闭探测功能，则获得 HANDLER_MAPPING_BEAN_NAME 对应的 Bean 对象，并设置为 handlerMappings
+		// 2.否则只获取当前上下文自定义配置的handlerMapping
 		else {
 			try {
 				HandlerMapping hm = context.getBean(HANDLER_MAPPING_BEAN_NAME, HandlerMapping.class);
@@ -609,6 +618,8 @@ public class DispatcherServlet extends FrameworkServlet {
 			}
 		}
 		// <3> 如果未获得到，则获得默认配置的 HandlerMapping 类
+		// 3.上述两步都未能获取到handlerMapping，则使用默认的handlerMapping，
+		//   包括BeanNameUrlHandlerMapping和RequestMappingHandlerMapping
 		if (this.handlerMappings == null) {
 			this.handlerMappings = getDefaultStrategies(context, HandlerMapping.class);
 			if (logger.isDebugEnabled()) {
