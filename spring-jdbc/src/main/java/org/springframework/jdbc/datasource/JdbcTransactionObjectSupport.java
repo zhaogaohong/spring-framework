@@ -100,12 +100,15 @@ public abstract class JdbcTransactionObjectSupport implements SavepointManager, 
 	 */
 	@Override
 	public Object createSavepoint() throws TransactionException {
+		// 获取ConnectionHolder
 		ConnectionHolder conHolder = getConnectionHolderForSavepoint();
 		try {
+			// 如果当前连接不支持保存点,抛出异常
 			if (!conHolder.supportsSavepoints()) {
 				throw new NestedTransactionNotSupportedException(
 						"Cannot create a nested transaction because savepoints are not supported by your JDBC driver");
 			}
+			// 创建保存点
 			return conHolder.createSavepoint();
 		}
 		catch (SQLException ex) {

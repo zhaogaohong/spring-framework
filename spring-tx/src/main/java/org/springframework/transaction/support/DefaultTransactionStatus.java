@@ -182,6 +182,7 @@ public class DefaultTransactionStatus extends AbstractTransactionStatus {
 			throw new NestedTransactionNotSupportedException(
 					"Transaction object [" + this.transaction + "] does not support savepoints");
 		}
+		// SavepointManager就是当前事物
 		return (SavepointManager) getTransaction();
 	}
 

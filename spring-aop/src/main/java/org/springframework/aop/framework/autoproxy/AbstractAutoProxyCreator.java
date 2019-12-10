@@ -289,6 +289,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 		if (bean != null) {
+			// 为beanName和beanClass构建缓存key
 			Object cacheKey = getCacheKey(bean.getClass(), beanName);
 			if (this.earlyProxyReferences.remove(cacheKey) != bean) {
 				//这个方法将返回代理类（如果需要的话）：
@@ -328,6 +329,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @return a proxy wrapping the bean, or the raw bean instance as-is
 	 */
 	protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
+		// 1、如果已经处理过或者不需要创建代理，则返回
 		if (beanName != null && this.targetSourcedBeans.contains(beanName)) {
 			return bean;
 		}
@@ -350,12 +352,16 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		//getAdvicesAndAdvisorsForBean 这个方法将得到所有的可用于拦截当前 bean 的 advisor、advice、interceptor。 切面 增强  拦截器
 		//我们先要为 bean 筛选出合适的通知器（通知器持有通知）。如何筛选呢？方式由很多，比如我们可以通过正则表达式匹配方法名，当然更多的时候用的是 AspectJ 表达式进行匹配。
 		// 那下面我们就来看一下使用 AspectJ 表达式筛选通知器的过程
+
+		// 2、创建代理
+		// 2.1 根据指定的bean获取所有的适合该bean的增强
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
 		/*
 		 * 若 specificInterceptors != null，即 specificInterceptors != DO_NOT_PROXY，
 		 * 则为 bean 生成代理对象，否则直接返回 bean
 		 */
 		if (specificInterceptors != DO_NOT_PROXY) {
+			// 2.2 为指定bean创建代理
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
 			// 2、创建代理...创建代理...创建代理...
 			Object proxy = createProxy(

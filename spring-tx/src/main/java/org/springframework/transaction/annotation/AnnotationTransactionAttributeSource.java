@@ -127,12 +127,22 @@ public class AnnotationTransactionAttributeSource extends AbstractFallbackTransa
 		this.annotationParsers = annotationParsers;
 	}
 
-
+	/**
+	 * 从给定的类上提取事物标签
+	 * @param clazz the class to retrieve the attribute for
+	 * @return
+	 */
 	@Override
 	protected TransactionAttribute findTransactionAttribute(Class<?> clazz) {
+		//进去
 		return determineTransactionAttribute(clazz);
 	}
 
+	/**
+	 * 从给定的方法上提取事物标签
+	 * @param method the method to retrieve the attribute for
+	 * @return
+	 */
 	@Override
 	protected TransactionAttribute findTransactionAttribute(Method method) {
 		return determineTransactionAttribute(method);
@@ -148,6 +158,8 @@ public class AnnotationTransactionAttributeSource extends AbstractFallbackTransa
 	 * @param element the annotated method or class
 	 * @return the configured transaction attribute, or {@code null} if none was found
 	 */
+//	这里又涉及到三个事物注解转换器，SpringTransactionAnnotationParser、JtaTransactionAnnotationParser、Ejb3TransactionAnnotationParser，
+//	我们只关心SpringTransactionAnnotationParser的转换就行了。接下来以SpringTransactionAnnotationParser为例看具体的事物标签提取和转换
 	protected TransactionAttribute determineTransactionAttribute(AnnotatedElement element) {
 		if (element.getAnnotations().length > 0) {
 			for (TransactionAnnotationParser annotationParser : this.annotationParsers) {

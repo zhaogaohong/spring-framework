@@ -68,10 +68,15 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	@Override
 	protected Object[] getAdvicesAndAdvisorsForBean(Class<?> beanClass, String beanName, TargetSource targetSource) {
 		// 查找合适的通知器
+		/**
+		 * 为当前bean获取所有需要自动代理的增强
+		 */
 		List<Advisor> advisors = findEligibleAdvisors(beanClass, beanName);
+		// 如果获取到的增强是个空的集合,则返回DO_NOT_PROXY-->空数组
 		if (advisors.isEmpty()) {
 			return DO_NOT_PROXY;
 		}
+		// 将获取到的增强转换为数组并返回
 		return advisors.toArray();
 	}
 
@@ -85,18 +90,26 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * @see #sortAdvisors
 	 * @see #extendAdvisors
 	 */
+	/**
+	 * 为当前bean获取所有需要自动代理的增强
+	 */
 	protected List<Advisor> findEligibleAdvisors(Class<?> beanClass, String beanName) {
-		// 查找所有的通知器 Xml 或者注解方式
+		// 查找所有的通知器 Xml 或者注解方式     // 1、查找所有候选增强
 		List<Advisor> candidateAdvisors = findCandidateAdvisors();
 		/*
 		 * 筛选可应用在 beanClass 上的 Advisor，通过 ClassFilter 和 MethodMatcher
 		 * 对目标类和方法进行匹配
 		 * 接下来我们还要对这些通知器进行筛选。适合应用在当前 bean 上的通知器留下，不适合的就让它自生自灭吧
 		 */
+		// 2、从所有增强集合中查找适合当前bean的增强
 		List<Advisor> eligibleAdvisors = findAdvisorsThatCanApply(candidateAdvisors, beanClass, beanName);
 		// 拓展操作
+		// 3、在eligibleAdvisors集合首位加入ExposeInvocationInterceptor增强
+		// ExposeInvocationInterceptor的作用是可以将当前的MethodInvocation暴露为一个thread-local对象,该拦截器很少使用
+		// 使用场景:一个切点(例如AspectJ表达式切点)需要知道它的全部调用上线文环境
 		extendAdvisors(eligibleAdvisors);
 		if (!eligibleAdvisors.isEmpty()) {
+			// 4.对增强进行排序
 			eligibleAdvisors = sortAdvisors(eligibleAdvisors);
 		}
 		return eligibleAdvisors;

@@ -242,11 +242,14 @@ public abstract class AopUtils {
 		classes.add(targetClass);
 		for (Class<?> clazz : classes) {
 			// 获取当前类的方法列表，包括从父类中继承的方法
+			// 5、循环代理目标的所有接口和实现类的所有方法并调用matches方法做匹配判断
 			Method[] methods = ReflectionUtils.getAllDeclaredMethods(clazz);
 			for (Method method : methods) {
 				// 使用 methodMatcher 匹配方法，匹配成功即可立即返回
 				if ((introductionAwareMethodMatcher != null &&
+						// 如果上一步得到的introductionAwareMethodMatcher对象不为空，则使用该对象的matches匹配
 						introductionAwareMethodMatcher.matches(method, targetClass, hasIntroductions)) ||
+						// ******否则使用Pointcut的methodMatcher对象做匹配 重点 TransactionAttributeSourcePointcut.matches
 						methodMatcher.matches(method, targetClass)) {
 					return true;
 				}
