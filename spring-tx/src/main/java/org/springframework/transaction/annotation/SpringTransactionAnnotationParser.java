@@ -53,7 +53,7 @@ public class SpringTransactionAnnotationParser implements TransactionAnnotationP
 	public TransactionAttribute parseTransactionAnnotation(Transactional ann) {
 		return parseTransactionAnnotation(AnnotationUtils.getAnnotationAttributes(ann, false, false));
 	}
-
+	//开始解析各种事务的标签
 	protected TransactionAttribute parseTransactionAnnotation(AnnotationAttributes attributes) {
 		RuleBasedTransactionAttribute rbta = new RuleBasedTransactionAttribute();
 

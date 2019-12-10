@@ -268,23 +268,28 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	protected Object invokeWithinTransaction(Method method, Class<?> targetClass, final InvocationCallback invocation)
 			throws Throwable {
 
-		// //获取事务属性，如果没有属性，则该方法没有事务 ** getTransactionAttribute重点**
+		//获取事务属性，如果没有属性，则该方法没有事务 ** getTransactionAttribute重点** SpringTransactionAnnotationParser.parseTransactionAnnotation
 		final TransactionAttribute txAttr = getTransactionAttributeSource().getTransactionAttribute(method, targetClass);
+		// 获取beanFactory中的transactionManager
 		final PlatformTransactionManager tm = determineTransactionManager(txAttr);
+		// 构造方法唯一标识（类.方法，如：service.UserServiceImpl.save）
 		final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 		//声明式事务处理
 		if (txAttr == null || !(tm instanceof CallbackPreferringPlatformTransactionManager)) {
-			//创建事务
+			//创建事务 重点     创建TransactionInfo
 			TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);
 
 			Object retVal;
 			try {
-				// 执行被增强的方法
+				// 执行原方法
+				// 继续调用方法拦截器链,这里一般将会调用目标类的方法,如:AccountServiceImpl.save方法
 				retVal = invocation.proceedWithInvocation();
 			}
 			catch (Throwable ex) {
 				// 异常回滚
 				completeTransactionAfterThrowing(txInfo, ex);
+				// 手动向上抛出异常，则下面的提交事务不会执行
+				// 如果子事务出异常，则外层事务代码需catch住子事务代码，不然外层事务也会回滚
 				throw ex;
 			}
 			finally {//清除信息
@@ -297,8 +302,6 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		else {
 			// 编程式事务处理
 			final ThrowableHolder throwableHolder = new ThrowableHolder();
-
-			// It's a CallbackPreferringPlatformTransactionManager: pass a TransactionCallback in.
 			try {
 				Object result = ((CallbackPreferringPlatformTransactionManager) tm).execute(txAttr,
 						new TransactionCallback<Object>() {
@@ -310,7 +313,6 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 								}
 								catch (Throwable ex) {
 									if (txAttr.rollbackOn(ex)) {
-										// A RuntimeException: will lead to a rollback.
 										if (ex instanceof RuntimeException) {
 											throw (RuntimeException) ex;
 										}
@@ -319,7 +321,6 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 										}
 									}
 									else {
-										// A normal return value: will lead to a commit.
 										throwableHolder.throwable = ex;
 										return null;
 									}
@@ -330,7 +331,6 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 							}
 						});
 
-				// Check result state: It might indicate a Throwable to rethrow.
 				if (throwableHolder.throwable != null) {
 					throw throwableHolder.throwable;
 				}
