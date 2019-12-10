@@ -348,7 +348,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 		BeanFactory parent = getParentBeanFactory();
 		if (parent != null) {
-			//AbstractBeanFactory getBean
+			//AbstractBeanFactory getBean doGetBean
 			return parent.getBean(requiredType, args);
 		}
 		throw new NoSuchBeanDefinitionException(requiredType);

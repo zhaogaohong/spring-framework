@@ -104,8 +104,6 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 				if (object == null) {
 					// 为空，则从 FactoryBean 中获取对象
 					object = doGetObjectFromFactoryBean(factory, beanName);
-					// Only post-process and store if not put there already during getObject() call above
-					// (e.g. because of circular reference processing triggered by custom getBean calls)
 					Object alreadyThere = this.factoryBeanObjectCache.get(beanName);
 					if (alreadyThere != null) {
 						object = alreadyThere;
@@ -115,14 +113,12 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 						if (object != null && shouldPostProcess) {
 							// 若该 Bean 处于创建中，则返回非处理对象，而不是存储它
 							if (isSingletonCurrentlyInCreation(beanName)) {
-								// Temporarily return non-post-processed object, not storing it yet..
 								return object;
 							}
 							// 单例 Bean 的前置处理
 							beforeSingletonCreation(beanName);
 							try {
-								// 对从 FactoryBean 获取的对象进行后处理
-								// 生成的对象将暴露给 bean 引用
+								// 对从 FactoryBean 获取的对象进行后处理,生成的对象将暴露给 bean 引用
 								object = postProcessObjectFromFactoryBean(object, beanName);
 							}
 							catch (Throwable ex) {
@@ -149,8 +145,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 			// 需要后续处理
 			if (object != null && shouldPostProcess) {
 				try {
-					// 对从 FactoryBean 获取的对象进行后处理
-					// 生成的对象将暴露给 bean 引用
+					// 对从 FactoryBean 获取的对象进行后处理,生成的对象将暴露给 bean 引用
 					object = postProcessObjectFromFactoryBean(object, beanName);
 				}
 				catch (Throwable ex) {
@@ -201,9 +196,6 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 		catch (Throwable ex) {
 			throw new BeanCreationException(beanName, "FactoryBean threw exception on object creation", ex);
 		}
-
-		// Do not accept a null value for a FactoryBean that's not fully
-		// initialized yet: Many FactoryBeans just return null then.
 		if (object == null && isSingletonCurrentlyInCreation(beanName)) {
 			throw new BeanCurrentlyInCreationException(
 					beanName, "FactoryBean which is currently in creation returned null from getObject");

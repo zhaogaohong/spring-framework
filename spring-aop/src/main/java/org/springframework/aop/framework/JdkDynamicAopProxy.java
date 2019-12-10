@@ -121,6 +121,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 		findDefinedEqualsAndHashCodeMethods(proxiedInterfaces);
 		//java.lang.reflect.Proxy.newProxyInstance(…) 方法需要三个参数，第一个是 ClassLoader，第二个参数代表需要实现哪些接口，
 		// 第三个参数最重要，是 InvocationHandler 实例，我们看到这里传了 this，因为 JdkDynamicAopProxy 本身实现了 InvocationHandler 接口。
+		// 调用 newProxyInstance 创建代理对象
 		return Proxy.newProxyInstance(classLoader, proxiedInterfaces, this);
 	}
 
@@ -152,6 +153,32 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 	 * <p>Callers will see exactly the exception thrown by the target,
 	 * unless a hook method throws an exception.
 	 */
+	//当目标方法被多个通知匹配到时，Spring 通过引入拦截器链来保证每个通知的正常执行。在本文中，我们将会通过源码了解到 Spring 是如何支持 expose-proxy 属性的，
+	// 以及通知与拦截器之间的关系，拦截器链的执行过程等。
+//	public class Hello implements IHello {
+//		@Override
+//		public void hello() {
+//			System.out.println("hello");
+//			this.hello("world");
+//		}
+//		@Override
+//		public void hello(String hello) {
+//			System.out.println("hello " +  hello);
+//		}
+//	}
+//	hello()方法调用了同类中的另一个方法hello(String)，此时hello(String)上的切面逻辑就无法执行了。
+//	这里，我们要对hello()方法进行改造，强制它调用代理对象中的hello(String)。改造结果如下：
+//	public class Hello implements IHello {
+//		@Override
+//		public void hello() {
+//			System.out.println("hello");
+//			((IHello) AopContext.currentProxy()).hello("world");
+//		}
+//		@Override
+//		public void hello(String hello) {
+//			System.out.println("hello " +  hello);
+//		}
+//	}
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		MethodInvocation invocation;
@@ -183,7 +210,9 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 
 			Object retVal;
 			// 如果设置了 exposeProxy，那么将 proxy 放到 ThreadLocal 中
+			// 如果 expose-proxy 属性为 true，则暴露代理对象
 			if (this.advised.exposeProxy) {
+				// 向 AopContext 中设置代理对象
 				oldProxy = AopContext.setCurrentProxy(proxy);
 				setProxyContext = true;
 			}
@@ -194,29 +223,31 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 			}
 
 			// 创建一个 chain，包含所有要执行的 advice
+			// 获取适合当前方法的拦截器
 			List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
-
+			// 如果拦截器链为空，则直接执行目标方法
 			if (chain.isEmpty()) {
 				// chain 是空的，说明不需要被增强，这种情况很简单
 				Object[] argsToUse = AopProxyUtils.adaptArgumentsIfNecessary(method, args);
+				// 通过反射执行目标方法
 				retVal = AopUtils.invokeJoinpointUsingReflection(target, method, argsToUse);
 			}
 			else {
 				// 执行方法，得到返回值
+				// 创建一个方法调用器，并将拦截器链传入其中
 				invocation = new ReflectiveMethodInvocation(proxy, target, method, args, targetClass, chain);
+				// 执行拦截器链
 				retVal = invocation.proceed();
 			}
 
-			// Massage return value if necessary.
+			// 获取方法返回值类型
 			Class<?> returnType = method.getReturnType();
 			if (retVal != null && retVal == target &&
 					returnType != Object.class && returnType.isInstance(proxy) &&
 					!RawTargetAccess.class.isAssignableFrom(method.getDeclaringClass())) {
-				// Special case: it returned "this" and the return type of the method
-				// is type-compatible. Note that we can't help if the target sets
-				// a reference to itself in another returned object.
+				// 如果方法返回值为 this，即 return this; 则将代理对象 proxy 赋值给 retVal
 				retVal = proxy;
-			}
+			}        // 如果返回值类型为基础类型，比如 int，long 等，当返回值为 null，抛出异常
 			else if (retVal == null && returnType != Void.TYPE && returnType.isPrimitive()) {
 				throw new AopInvocationException(
 						"Null return value from advice does not match primitive return type for: " + method);
@@ -233,6 +264,15 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 				AopContext.setCurrentProxy(oldProxy);
 			}
 		}
+//		上面的代码我做了比较详细的注释。下面我们来总结一下 invoke 方法的执行流程，如下：
+//		1.检测 expose-proxy 是否为 true，若为 true，则暴露代理对象
+//		2.获取适合当前方法的拦截器
+//		3.如果拦截器链为空，则直接通过反射执行目标方法
+//		4.若拦截器链不为空，则创建方法调用 ReflectiveMethodInvocation 对象
+//		5.调用 ReflectiveMethodInvocation 对象的 proceed() 方法启动拦截器链
+//		6.处理返回值，并返回该值
+//		在以上6步中，我们重点关注第2步和第5步中的逻辑。第2步用于获取拦截器链，第5步则是启动拦截器链
+		//简单地说，就是在执行每个方法的时候，判断下该方法是否需要被一次或多次增强（执行一个或多个 advice）。
 	}
 
 

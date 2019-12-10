@@ -84,6 +84,7 @@ public abstract class AopConfigUtils {
 	}
 
 	public static BeanDefinition registerAspectJAnnotationAutoProxyCreatorIfNecessary(BeanDefinitionRegistry registry, Object source) {
+		//AnnotationAwareAspectJAutoProxyCreator 和前面介绍的 DefaultAdvisorAutoProxyCreator 一样，它也是一个 BeanPostProcessor，剩下的我们就不说了
 		return registerOrEscalateApcAsRequired(AnnotationAwareAspectJAutoProxyCreator.class, registry, source);
 	}
 

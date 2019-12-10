@@ -265,7 +265,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			//一般情况下，Spring 通过反射机制利用 bean 的 class 属性指定实现类来实例化 bean 。某些情况下，实例化 bean 过程比较复杂，如果按照传统的方式，
 			// 则需要在 中提供大量的配置信息，配置方式的灵活性是受限的，这时采用编码的方式可能会得到一个简单的方案。Spring 为此提供了一个 FactoryBean 的工厂类接口，
 			// 用户可以通过实现该接口定制实例化 bean 的逻辑。
-			//FactoryBean 接口对于 Spring 框架来说战友重要的地址，Spring 自身就提供了 70 多个 FactoryBean 的实现。它们隐藏了实例化一些复杂 bean 的细节，给上层应用带来了便利
+			//FactoryBean 接口对于 Spring 框架来说占有重要的地址，Spring 自身就提供了 70 多个 FactoryBean 的实现。它们隐藏了实例化一些复杂 bean 的细节，给上层应用带来了便利
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 		else {
@@ -273,8 +273,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			//Spring 只处理单例模式下得循环依赖，对于原型模式的循环依赖直接抛出异常。主要原因还是在于，和 Spring 解决循环依赖的策略有关。
 			//原型( Prototype )模式，我们知道是没法使用缓存的，所以 Spring 对原型模式的循环依赖处理策略则是不处理。
 			if (isPrototypeCurrentlyInCreation(beanName)) {
-				// 创建过了此 beanName 的 prototype 类型的 bean，那么抛异常，
-				// 往往是因为陷入了循环引用
+				// 创建过了此 beanName 的 prototype 类型的 bean，那么抛异常，往往是因为陷入了循环引用
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
 
@@ -304,9 +303,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			 * 对于 prototype 的 Bean 来说，本来就是要创建一个新的 Bean。
 			 */
 			try {
-				// <6> 从容器中获取 beanName 相应的 GenericBeanDefinition 对象，并将其转换为 RootBeanDefinition 对象
-//				。但是，所有的 Bean 后续处理都是针对于 RootBeanDefinition 的，所以这里需要进行一个转换。
-//				转换的同时，如果父类 bean 不为空的话，则会一并合并父类的属性
+				// <6> 从容器中获取 beanName 相应的 GenericBeanDefinition 对象，并将其转换为 RootBeanDefinition 对象。
+				// 但是，所有的 Bean 后续处理都是针对于 RootBeanDefinition 的，所以这里需要进行一个转换。
+				// 转换的同时，如果父类 bean 不为空的话，则会一并合并父类的属性
 				final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 				// 检查给定的合并的 BeanDefinition
 				checkMergedBeanDefinition(mbd, beanName, args);
@@ -1681,22 +1680,20 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected Object getObjectForBeanInstance(
 			Object beanInstance, String name, String beanName, RootBeanDefinition mbd) {
 		// <1> 若为工厂类引用（name 以 & 开头）
-		// Don't let calling code try to dereference the factory if the bean isn't a factory.
 		if (BeanFactoryUtils.isFactoryDereference(name) && !(beanInstance instanceof FactoryBean)) {
 			throw new BeanIsNotAFactoryException(transformedBeanName(name), beanInstance.getClass());
 		}
-		// 到这里我们就有了一个 Bean 实例，当然该实例可能是会是是一个正常的 bean 又或者是一个 FactoryBean
-		// 如果是 FactoryBean，我我们则创建该 Bean
+		//2.到这里我们就有了一个 Bean 实例，当然该实例可能是会是是一个正常的 bean 又或者是一个 FactoryBean，如果是 FactoryBean，我们则创建该 Bean
 		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
 			return beanInstance;
 		}
 
 		Object object = null;
-		// <3> 若 BeanDefinition 为 null，则从缓存中加载 Bean 对象
+		// 3.若 BeanDefinition 为 null，则从缓存中加载 Bean 对象
 		if (mbd == null) {
 			object = getCachedObjectForFactoryBean(beanName);
 		}
-		// 若 object 依然为空，则可以确认，beanInstance 一定是 FactoryBean 。从而，使用 FactoryBean 获得 Bean 对象
+		//4.若 object 依然为空，则可以确认，beanInstance 一定是 FactoryBean 。从而，使用 FactoryBean 获得 Bean 对象
 		if (object == null) {
 			// Return bean instance from factory.
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
@@ -1709,7 +1706,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 			// 是否是用户定义的，而不是应用程序本身定义的
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
-			// 核心处理方法，使用 FactoryBean 获得 Bean 对象
+			// *** 重要 核心处理方法，使用 FactoryBean 获得 Bean 对象
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
 		}
 		return object;
@@ -1757,14 +1754,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		AccessControlContext acc = (System.getSecurityManager() != null ? getAccessControlContext() : null);
 		if (!mbd.isPrototype() && requiresDestruction(bean, mbd)) {
 			if (mbd.isSingleton()) {
-				// Register a DisposableBean implementation that performs all destruction
-				// work for the given bean: DestructionAwareBeanPostProcessors,
-				// DisposableBean interface, custom destroy method.
 				registerDisposableBean(beanName,
 						new DisposableBeanAdapter(bean, beanName, mbd, getBeanPostProcessors(), acc));
 			}
 			else {
-				// A bean with a custom scope...
 				Scope scope = this.scopes.get(mbd.getScope());
 				if (scope == null) {
 					throw new IllegalStateException("No Scope registered for scope name '" + mbd.getScope() + "'");

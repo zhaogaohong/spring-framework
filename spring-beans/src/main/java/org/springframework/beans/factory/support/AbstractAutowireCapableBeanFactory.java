@@ -256,7 +256,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * <p>By default, only the BeanFactoryAware interface is ignored.
 	 * For further types to ignore, invoke this method for each type.
 	 * @see org.springframework.beans.factory.BeanFactoryAware
-	 * @see org.springframework.context.ApplicationContextAware
+	 * @see org.springframework.context
 	 */
 	public void ignoreDependencyInterface(Class<?> ifc) {
 		this.ignoredDependencyInterfaces.add(ifc);
@@ -1053,6 +1053,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @return the shortcut-determined bean instance, or {@code null} if none
 	 */
 	protected Object resolveBeforeInstantiation(String beanName, RootBeanDefinition mbd) {
+
 		Object bean = null;
 		if (!Boolean.FALSE.equals(mbd.beforeInstantiationResolved)) {
 			// Make sure bean class is actually resolved at this point.
@@ -1060,6 +1061,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				Class<?> targetType = determineTargetType(beanName, mbd);
 				if (targetType != null) {
 					// 前置
+					//这里也有创建代理的逻辑，以至于很多人会搞错。确实，这里是有可能创建代理的，但前提是对于相应的 bean 我们有自定义的 TargetSource 实现，
+					// 进到 getCustomTargetSource(...) 方法就清楚了，我们需要配置一个 customTargetSourceCreators，它是一个 TargetSourceCreator 数组。
 					bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
 					if (bean != null) {
 						// 后置
@@ -1338,8 +1341,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					if (bp instanceof InstantiationAwareBeanPostProcessor) {
 						InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
 						// 这里有个非常有用的 BeanPostProcessor 进到这里: AutowiredAnnotationBeanPostProcessor
-						// 对采用 @Autowired、@Value 注解的依赖进行设值，这里的内容也是非常丰富的，不过本文不会展开说了，感兴趣的读者请自行研究
-						// 对所有需要依赖检查的属性进行后处理
+						// 对采用 @Autowired、@Value 注解的依赖进行设值，这里的内容也是非常丰富的，不过本文不会展开说，对所有需要依赖检查的属性进行后处理
 						pvs = ibp.postProcessPropertyValues(pvs, filteredPds, bw.getWrappedInstance(), beanName);
 						if (pvs == null) {
 							return;
@@ -1354,7 +1356,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 		//上面只是完成了所有注入属性的获取，将获取的属性封装在 PropertyValues 的实例对象 pvs 中，并没有应用到已经实例化的 bean 中,applyPropertyValues  则是完成这一步骤的
-		// 设置 bean 实例的属性值      将属性应用到 bean 中
+		// 设置 bean 实例的属性值 将属性应用到 bean 中
 		applyPropertyValues(beanName, mbd, bw, pvs);
 	}
 
@@ -1598,7 +1600,6 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			mpvs = (MutablePropertyValues) pvs;
 			// 属性值已经转换
 			if (mpvs.isConverted()) {
-				// Shortcut: use the pre-converted values as-is.
 				try {
 					// 为实例化对象设置属性值 ，依赖注入真真正正地实现在此！！！！！
 					bw.setPropertyValues(mpvs);
@@ -1623,7 +1624,6 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// 获取对应的解析器
 		BeanDefinitionValueResolver valueResolver = new BeanDefinitionValueResolver(this, beanName, mbd, converter);
 
-		// Create a deep copy, resolving any references for values.
 		List<PropertyValue> deepCopy = new ArrayList<PropertyValue>(original.size());
 		boolean resolveNecessary = false;
 		// 遍历属性，将属性转换为对应类的对应属性的类型
@@ -1641,8 +1641,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				Object convertedValue = resolvedValue;// 转换之后的属性值
 				boolean convertible = bw.isWritableProperty(propertyName) &&
 						!PropertyAccessorUtils.isNestedOrIndexedProperty(propertyName);
-				// 属性值是否可以转换
-				// 使用用户自定义的类型转换器转换属性值 重点
+				// 属性值是否可以转换，使用用户自定义的类型转换器转换属性值 重点
 				if (convertible) {
 					convertedValue = convertForProperty(resolvedValue, propertyName, bw, converter);
 				}
@@ -1654,8 +1653,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					}
 					deepCopy.add(pv);
 				}
-				// 属性是可转换的，且属性原始值是字符串类型，且属性的原始类型值不是
-				// 动态生成的字符串，且属性的原始值不是集合或者数组类型
+				// 属性是可转换的，且属性原始值是字符串类型，且属性的原始类型值不是，动态生成的字符串，且属性的原始值不是集合或者数组类型
 				else if (convertible && originalValue instanceof TypedStringValue &&
 						!((TypedStringValue) originalValue).isDynamic() &&
 						!(convertedValue instanceof Collection || ObjectUtils.isArray(convertedValue))) {
@@ -1740,14 +1738,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		Object wrappedBean = bean;
 		if (mbd == null || !mbd.isSynthetic()) {
-			// 2、BeanPostProcessor 的 postProcessBeforeInitialization 回调     // <2> 后处理器，before
+			// 2、BeanPostProcessor 的 postProcessBeforeInitialization 回调 ，后处理器，before
 			//BeanPostProcessor 的作用是：如果我们想要在 Spring 容器完成 Bean 的实例化，配置和其他的初始化后添加一些自己的逻辑处理，那么请使用该接口，
 			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
 		}
 
 		try {
-			// 3、处理 bean 中定义的 init-method，
-			// 或者如果 bean 实现了 InitializingBean 接口，调用 afterPropertiesSet() 方法
+			// 3、处理 bean 中定义的 init-method，或者如果 bean 实现了 InitializingBean 接口，调用 afterPropertiesSet() 方法
 			// <3> 激活用户自定义的 init 方法
 			invokeInitMethods(beanName, wrappedBean, mbd);
 		}
@@ -1825,9 +1822,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			String initMethodName = mbd.getInitMethodName();
 			if (initMethodName != null && !(isInitializingBean && "afterPropertiesSet".equals(initMethodName)) &&
 					!mbd.isExternallyManagedInitMethod(initMethodName)) {
-				// <2> 激活用户自定义的初始化方法
-				// 激活用户自定义的初始化方法
-				// 利用反射机制执行
+				// <2> 激活用户自定义的初始化方法，利用反射机制执行
 				invokeCustomInitMethod(beanName, bean, mbd);
 			}
 		}

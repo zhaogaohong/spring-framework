@@ -88,24 +88,27 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 				if (aspectNames == null) {
 					List<Advisor> advisors = new LinkedList<Advisor>();
 					aspectNames = new LinkedList<String>();
+					// 从容器中获取所有 bean 的名称
 					String[] beanNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 							this.beanFactory, Object.class, true, false);
+					// 遍历 beanNames
 					for (String beanName : beanNames) {
 						if (!isEligibleBean(beanName)) {
 							continue;
 						}
-						// We must be careful not to instantiate beans eagerly as in this case they
-						// would be cached by the Spring container but would not have been weaved.
+						// 根据 beanName 获取 bean 的类型
 						Class<?> beanType = this.beanFactory.getType(beanName);
 						if (beanType == null) {
 							continue;
 						}
+						// 检测 beanType 是否包含 Aspect 注解
 						if (this.advisorFactory.isAspect(beanType)) {
 							aspectNames.add(beanName);
 							AspectMetadata amd = new AspectMetadata(beanType, beanName);
 							if (amd.getAjType().getPerClause().getKind() == PerClauseKind.SINGLETON) {
 								MetadataAwareAspectInstanceFactory factory =
 										new BeanFactoryAspectInstanceFactory(this.beanFactory, beanName);
+								// 获取通知器
 								List<Advisor> classAdvisors = this.advisorFactory.getAdvisors(factory);
 								if (this.beanFactory.isSingleton(beanName)) {
 									this.advisorsCache.put(beanName, classAdvisors);
@@ -116,7 +119,6 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 								advisors.addAll(classAdvisors);
 							}
 							else {
-								// Per target or per this.
 								if (this.beanFactory.isSingleton(beanName)) {
 									throw new IllegalArgumentException("Bean with name '" + beanName +
 											"' is a singleton, but aspect instantiation model is not singleton");
@@ -148,6 +150,12 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 				advisors.addAll(this.advisorFactory.getAdvisors(factory));
 			}
 		}
+
+//		上面就是 buildAspectJAdvisors 的代码，看起来比较长。代码比较多，我们关注重点的方法调用即可。在进行后续的分析前，这里先对 buildAspectJAdvisors 方法的执行流程做个总结。如下：
+//		获取容器中所有 bean 的名称（beanName）
+//		遍历上一步获取到的 bean 名称数组，并获取当前 beanName 对应的 bean 类型（beanType）
+//		根据 beanType 判断当前 bean 是否是一个的 Aspect 注解类，若不是则不做任何处理
+//		调用 advisorFactory.getAdvisors 获取通知器
 		return advisors;
 	}
 
