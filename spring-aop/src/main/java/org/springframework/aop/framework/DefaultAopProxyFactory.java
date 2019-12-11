@@ -50,7 +50,6 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
 		/*
 		 * 下面的三个条件简单分析一下：
-		 *
 		 *   条件1：config.isOptimize() - 是否需要优化，这个属性没怎么用过，  细节我不是很清楚
 		 *   条件2：config.isProxyTargetClass() - 检测 proxyTargetClass 的值，前面的代码会设置这个值
 		 *   条件3：hasNoUserSuppliedProxyInterfaces(config) - 目标 bean 是否实现了接口
@@ -62,20 +61,19 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 				throw new AopConfigException("TargetSource cannot determine target class: " +
 						"Either an interface or a target is required for proxy creation.");
 			}
-			// 如果要代理的类本身就是接口，也会用 JDK 动态代理
-			// 我也没用过这个。。。
+			//1.如果要代理的类本身就是接口，也会用 JDK 动态代理
 			if (targetClass.isInterface() || Proxy.isProxyClass(targetClass)) {
 				return new JdkDynamicAopProxy(config);
 			}
-			// 创建 CGLIB 代理，ObjenesisCglibAopProxy 继承自 CglibAopProxy
+			//2.创建 CGLIB 代理，ObjenesisCglibAopProxy 继承自 CglibAopProxy
 			return new ObjenesisCglibAopProxy(config);
 		}
 		else {
-			// 创建 JDK 动态代理
+			//3.创建 JDK 动态代理
 			return new JdkDynamicAopProxy(config);
 		}
 
-//		这里总结一下：
+//		总结一下：
 //		如果被代理的目标类实现了一个或多个自定义的接口，那么就会使用 JDK 动态代理，如果没有实现任何接口，会使用 CGLIB 实现代理，如果设置了 proxy-target-class="true"，那么都会使用 CGLIB。
 //		JDK 动态代理基于接口，所以只有接口中的方法会被增强，而 CGLIB 基于类继承，需要注意就是如果方法使用了 final 修饰，或者是 private 方法，是不能被增强的。
 	}

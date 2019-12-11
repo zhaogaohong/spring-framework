@@ -225,7 +225,6 @@ public abstract class AopUtils {
 
 		MethodMatcher methodMatcher = pc.getMethodMatcher();
 		if (methodMatcher == MethodMatcher.TRUE) {
-			// No need to iterate the methods if we're matching any method anyway...
 			return true;
 		}
 
@@ -241,8 +240,7 @@ public abstract class AopUtils {
 		Set<Class<?>> classes = new LinkedHashSet<Class<?>>(ClassUtils.getAllInterfacesForClassAsSet(targetClass));
 		classes.add(targetClass);
 		for (Class<?> clazz : classes) {
-			// 获取当前类的方法列表，包括从父类中继承的方法
-			// 5、循环代理目标的所有接口和实现类的所有方法并调用matches方法做匹配判断
+			//1.获取当前类的方法列表，包括从父类中继承的方法 循环代理目标的所有接口和实现类的所有方法并调用matches方法做匹配判断
 			Method[] methods = ReflectionUtils.getAllDeclaredMethods(clazz);
 			for (Method method : methods) {
 				// 使用 methodMatcher 匹配方法，匹配成功即可立即返回
@@ -286,8 +284,7 @@ public abstract class AopUtils {
 			/*
 			 * 从通知器中获取类型过滤器 ClassFilter，并调用 matchers 方法进行匹配。
 			 * ClassFilter 接口的实现类 AspectJExpressionPointcut 为例，该类的
-			 * 匹配工作由 AspectJ 表达式解析器负责，具体匹配细节这个就没法分析了，我
-			 * AspectJ 表达式的工作流程不是很熟
+			 * 匹配工作由 AspectJ 表达式解析器负责，具体匹配细节这个就没法分析了，我AspectJ 表达式的工作流程不是很熟
 			 */
 			return ((IntroductionAdvisor) advisor).getClassFilter().matches(targetClass);
 		}
@@ -313,6 +310,7 @@ public abstract class AopUtils {
 		if (candidateAdvisors.isEmpty()) {
 			return candidateAdvisors;
 		}
+		//符合条件的advise
 		List<Advisor> eligibleAdvisors = new LinkedList<Advisor>();
 		for (Advisor candidate : candidateAdvisors) {
 			// 筛选 IntroductionAdvisor 类型的通知器

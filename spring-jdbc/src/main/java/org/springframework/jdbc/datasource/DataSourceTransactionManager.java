@@ -271,12 +271,12 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 				if (logger.isDebugEnabled()) {
 					logger.debug("Switching JDBC Connection [" + con + "] to manual commit");
 				}
-				con.setAutoCommit(false);//取消数据库的自动提交,看到了怎么创建事务了嘛啊？就是连接数据库，然后更改当前数据库的连接的事务提交为false，当前执行了sql之后就不会自动提交了。
+				//取消数据库的自动提交,看到了怎么创建事务了嘛啊？就是连接数据库，然后更改当前数据库的连接的事务提交为false，当前执行了sql之后就不会自动提交了。
+				con.setAutoCommit(false);
 			}
-			// 设置当前事物只读,如果定义了只读属性为true
+			//设置当前事物只读,如果定义了只读属性为true
 			prepareTransactionalConnection(con, definition);
-			//设置当前线程有事务，后续进来的线程判断的时候就可以按照这个来做判断了
-			// 设置当前事物为已激活
+			//设置当前线程有事务，后续进来的线程判断的时候就可以按照这个来做判断了 设置当前事物为已激活
 			txObject.getConnectionHolder().setTransactionActive(true);
 			// 设置超时时间(如果超时时间不等于默认超时时间)
 			int timeout = determineTimeout(definition);

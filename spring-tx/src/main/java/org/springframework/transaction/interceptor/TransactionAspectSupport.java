@@ -267,18 +267,16 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 */
 	protected Object invokeWithinTransaction(Method method, Class<?> targetClass, final InvocationCallback invocation)
 			throws Throwable {
-		// 1.准备工作
-		// 获取事物属性
-		//获取事务属性，如果没有属性，则该方法没有事务 ** getTransactionAttribute重点** SpringTransactionAnnotationParser.parseTransactionAnnotation
+
+		//1.准备工作 获取事务属性，如果没有属性，则该方法没有事务 ** getTransactionAttribute重点** SpringTransactionAnnotationParser.parseTransactionAnnotation
 		final TransactionAttribute txAttr = getTransactionAttributeSource().getTransactionAttribute(method, targetClass);
-		// 获取beanFactory中的transactionManager
-		// 获取事物管理器
+		// 获取beanFactory中的transactionManager 事物管理器
 		final PlatformTransactionManager tm = determineTransactionManager(txAttr);
 		// 构造方法唯一标识（类.方法，如：service.UserServiceImpl.save）
 		final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 		//2.声明式事务处理
 		if (txAttr == null || !(tm instanceof CallbackPreferringPlatformTransactionManager)) {
-			//创建事务 重点     创建TransactionInfo
+			//创建事务 设置autoCommit=false 重点  创建TransactionInfo
 			TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);
 
 			Object retVal;
@@ -496,25 +494,18 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		TransactionInfo txInfo = new TransactionInfo(tm, txAttr, joinpointIdentification);
 		// 如果事物标签不为空,则将TransactionStatus对象赋予TransactionInfo
 		if (txAttr != null) {
-			// We need a transaction for this method...
 			if (logger.isTraceEnabled()) {
 				logger.trace("Getting transaction for [" + txInfo.getJoinpointIdentification() + "]");
 			}
-			// The transaction manager will flag an error if an incompatible tx already exists.
 			txInfo.newTransactionStatus(status);
 		}
 		else {
-			// The TransactionInfo.hasTransaction() method will return false. We created it only
-			// to preserve the integrity of the ThreadLocal stack maintained in this class.
 			if (logger.isTraceEnabled()) {
 				logger.trace("No need to create transaction for [" + joinpointIdentification +
 						"]: This method is not transactional.");
 			}
 		}
 
-		// We always bind the TransactionInfo to the thread, even if we didn't create
-		// a new transaction here. This guarantees that the TransactionInfo stack
-		// will be managed correctly even if no transaction was created by this aspect.
 		// 这里:不论是否开启了新的事物,都将TransactionInfo绑定到当前线程,以保证TransactionInfo堆栈的完整性。
 		txInfo.bindToThread();
 		return txInfo;

@@ -490,13 +490,6 @@ public class ContextLoader {
 //		<param-name>contextConfigLocation</param-name>
 //		<param-value>classpath:config/applicationContext.xml</param-value>
 //		</context-param>
-		/**
-		 * 2.设置配置文件路径，如
-		 * <context-param>
-		 *      <param-name>contextConfigLocation</param-name>
-		 *      <param-value>classpath:spring-context.xml</param-value>
-		 *  </context-param>
-		 */
 		String configLocationParam = sc.getInitParameter(CONFIG_LOCATION_PARAM);
 		if (configLocationParam != null) {
 			wac.setConfigLocation(configLocationParam);

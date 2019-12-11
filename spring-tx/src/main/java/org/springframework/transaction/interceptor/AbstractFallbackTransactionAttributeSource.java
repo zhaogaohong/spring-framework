@@ -173,7 +173,7 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 			return txAttr;
 		}
 
-		// 3.3 如果从目标类上提取的方法,不等于原始方法 todo lyc 这里还要再次分析下
+		// 3.3 如果从目标类上提取的方法,不等于原始方法
 		if (specificMethod != method) {
 			// 首先尝试从原始方法上提取事物标签
 			txAttr = findTransactionAttribute(method);

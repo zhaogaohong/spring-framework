@@ -356,7 +356,6 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 			return handleExistingTransaction(definition, transaction, debugEnabled);
 		}
 		// 3.如果当前不存在事物
-
 		// 3.1 如果事物定义的超时时间,小于默认的超时时间,抛出异常,TransactionDefinition.TIMEOUT_DEFAULT --> -1
 		if (definition.getTimeout() < TransactionDefinition.TIMEOUT_DEFAULT) {
 			throw new InvalidTimeoutException("Invalid transaction timeout", definition.getTimeout());
@@ -387,10 +386,9 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 						definition, transaction, true, newSynchronization, debugEnabled, suspendedResources);
 				// 开启事物 DataSourceTransactionManager
 				doBegin(transaction, definition);//**doBegin**构造事务，包括设置connectionHolder，隔离级别，timeout，如果是新连接，绑定到当前线程
-				// 初始化事务同步。
-				//事务开启多线程后无效原因
+				//初始化事务同步，事务开启多线程后无效原因
 				//Initialize transaction synchronization as appropriate.，将当前事务记录到ThreadLocal中
-				prepareSynchronization(status, definition);//新同步事务的设置，针对当前线程的设置，这里用到了ThreadLocal哦。将当前事务记录到ThreadLocal中
+				prepareSynchronization(status, definition);
 				return status;
 			}
 			catch (RuntimeException ex) {
@@ -832,32 +830,31 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 				if (status.hasSavepoint()) {
 					if (status.isDebug()) {
 						logger.debug("Releasing transaction savepoint");
-					}//如果存在保存点，则清除保存点信息
+					}
+					//如果存在保存点，则清除保存点信息
 					status.releaseHeldSavepoint();
 				}
 				else if (status.isNewTransaction()) {
 					if (status.isDebug()) {
 						logger.debug("Initiating transaction commit");
-					}//独立事务则直接提交
+					}
+					//独立事务则直接提交
 					doCommit(status);
 				}
-				// Throw UnexpectedRollbackException if we have a global rollback-only
-				// marker but still didn't get a corresponding exception from commit.
 				if (globalRollbackOnly) {
 					throw new UnexpectedRollbackException(
 							"Transaction silently rolled back because it has been marked as rollback-only");
 				}
 			}
 			catch (UnexpectedRollbackException ex) {
-				// can only be caused by doCommit
 				triggerAfterCompletion(status, TransactionSynchronization.STATUS_ROLLED_BACK);
 				throw ex;
 			}
 			catch (TransactionException ex) {
-				// can only be caused by doCommit
 				if (isRollbackOnCommitFailure()) {
 					doRollbackOnCommitException(status, ex);
-				} //提交过程中出现异常回滚
+				}
+				//提交过程中出现异常回滚
 				else {
 					triggerAfterCompletion(status, TransactionSynchronization.STATUS_UNKNOWN);
 				}
@@ -878,8 +875,6 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 				throw err;
 			}
 
-			// Trigger afterCommit callbacks, with an exception thrown there
-			// propagated to callers but the transaction still considered as committed.
 			try {
 				triggerAfterCommit(status);
 			}

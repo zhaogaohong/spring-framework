@@ -71,6 +71,25 @@ class TxAdviceBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 		return TransactionInterceptor.class;
 	}
 
+//	<!-- 通知 -->
+//	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+//	 	<tx:attributes>
+//	 		<tx:method name="add*" propagation="REQUIRED"/>
+//	 		<tx:method name="save*" propagation="REQUIRED"/>
+//	 		<tx:method name="insert*" propagation="REQUIRED"/>
+//	 		<tx:method name="update*" propagation="REQUIRED"/>
+//	 		<tx:method name="find*" propagation="NOT_SUPPORTED" read-only="true"/>
+//	 		<tx:method name="select*" propagation="NOT_SUPPORTED" read-only="true"/>
+//	 		<tx:method name="get*" propagation="NOT_SUPPORTED" read-only="true"/>
+//	 		<tx:method name="load*" propagation="NOT_SUPPORTED" read-only="true" />
+//	 		<tx:method name="search*" propagation="NOT_SUPPORTED" read-only="true" />
+//	 	</tx:attributes>
+//	 </tx:advice>
+//
+//	 <!-- aop事务代理 -->
+//	 <aop:config>
+//	 	<aop:advisor advice-ref="txAdvice" pointcut="execution(* cn.com.wp.**.serviceImpl.*.*(..))"/>
+//	 </aop:config>
 	@Override
 	protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
 		builder.addPropertyReference("transactionManager", TxNamespaceHandler.getTransactionManagerName(element));
@@ -83,6 +102,18 @@ class TxAdviceBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 		else if (txAttributes.size() == 1) {
 			// Using attributes source.
 			Element attributeSourceElement = txAttributes.get(0);
+
+			//解析以下元素	<tx:attributes>
+//	 		<tx:method name="add*" propagation="REQUIRED"/>
+//	 		<tx:method name="save*" propagation="REQUIRED"/>
+//	 		<tx:method name="insert*" propagation="REQUIRED"/>
+//	 		<tx:method name="update*" propagation="REQUIRED"/>
+//	 		<tx:method name="find*" propagation="NOT_SUPPORTED" read-only="true"/>
+//	 		<tx:method name="select*" propagation="NOT_SUPPORTED" read-only="true"/>
+//	 		<tx:method name="get*" propagation="NOT_SUPPORTED" read-only="true"/>
+//	 		<tx:method name="load*" propagation="NOT_SUPPORTED" read-only="true" />
+//	 		<tx:method name="search*" propagation="NOT_SUPPORTED" read-only="true" />
+//	 	</tx:attributes>
 			RootBeanDefinition attributeSourceDefinition = parseAttributeSource(attributeSourceElement, parserContext);
 			builder.addPropertyValue("transactionAttributeSource", attributeSourceDefinition);
 		}

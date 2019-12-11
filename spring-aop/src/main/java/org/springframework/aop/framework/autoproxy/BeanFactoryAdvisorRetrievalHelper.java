@@ -63,30 +63,26 @@ public class BeanFactoryAdvisorRetrievalHelper {
 	 * @see #isEligibleBean
 	 */
 	public List<Advisor> findAdvisorBeans() {
-		// cachedAdvisorBeanNames 是 advisor 名称的缓存
-		// 获取缓存的增强
+		//1.cachedAdvisorBeanNames 是 advisor 名称的缓存,获取缓存的增强
 		String[] advisorNames = this.cachedAdvisorBeanNames;
-		/*
-		 * 如果 cachedAdvisorBeanNames 为空，这里到容器中查找，
-		 * 并设置缓存，后续直接使用缓存即可
-		 */
+		//2.如果 cachedAdvisorBeanNames 为空，这里到容器BeanFactory中查找，并设置缓存，后续直接使用缓存即可
 		if (advisorNames == null) {
-			// 从容器中查找 Advisor 类型 bean 的名称         从当前BeanFactory中获取所有类型为Advisor的bean
+			// 从容器中查找 Advisor 类型 bean 的名称从当前BeanFactory中获取所有类型为Advisor的bean
 			advisorNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 					this.beanFactory, Advisor.class, true, false);
 			// 设置缓存
 			this.cachedAdvisorBeanNames = advisorNames;
 		}
-		// 当前BeanFactory中没有类型为Advisor的bean则返回一个空的集合
+		//3.当前容器BeanFactory中没有类型为Advisor的bean则返回一个空的集合
 		if (advisorNames.length == 0) {
 			return new ArrayList<Advisor>();
 		}
-		// 循环所有获取到的bean
+		//4.循环所有获取到的bean
 		List<Advisor> advisors = new ArrayList<Advisor>();
 		// 遍历 advisorNames
 		for (String name : advisorNames) {
 			if (isEligibleBean(name)) {
-				// 忽略正在创建中的 advisor bean             // 跳过正在创建的增强
+				// 忽略正在创建中的 advisor bean ，跳过正在创建的增强
 				if (this.beanFactory.isCurrentlyInCreation(name)) {
 					if (logger.isDebugEnabled()) {
 						logger.debug("Skipping currently created advisor '" + name + "'");
@@ -94,11 +90,7 @@ public class BeanFactoryAdvisorRetrievalHelper {
 				}
 				else {
 					try {
-						/*
-						 * 调用 getBean 方法从容器中获取名称为 name 的 bean，
-						 * 并将 bean 添加到 advisors 中
-						 */
-						// 通过getBean方法获取bean实例
+						//调用 getBean 方法从容器中获取名称为 name 的 bean，并将 bean 添加到 advisors 中
 						advisors.add(this.beanFactory.getBean(name, Advisor.class));
 					}
 					catch (BeanCreationException ex) {
@@ -110,8 +102,6 @@ public class BeanFactoryAdvisorRetrievalHelper {
 									logger.debug("Skipping advisor '" + name +
 											"' with dependency on currently created bean: " + ex.getMessage());
 								}
-								// Ignore: indicates a reference back to the bean we're trying to advise.
-								// We want to find advisors other than the currently created bean itself.
 								continue;
 							}
 						}

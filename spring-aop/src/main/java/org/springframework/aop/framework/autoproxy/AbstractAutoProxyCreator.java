@@ -289,10 +289,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 		if (bean != null) {
-			// 为beanName和beanClass构建缓存key
+			//1.为beanName和beanClass构建缓存key
 			Object cacheKey = getCacheKey(bean.getClass(), beanName);
 			if (this.earlyProxyReferences.remove(cacheKey) != bean) {
-				//这个方法将返回代理类（如果需要的话）：
+				//2.这个方法将返回代理类
 				return wrapIfNecessary(bean, beanName, cacheKey);
 			}
 		}
@@ -329,37 +329,29 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @return a proxy wrapping the bean, or the raw bean instance as-is
 	 */
 	protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
-		// 1、如果已经处理过或者不需要创建代理，则返回
+		// 1.如果已经处理过或者不需要创建代理，则返回
 		if (beanName != null && this.targetSourcedBeans.contains(beanName)) {
 			return bean;
 		}
 		if (Boolean.FALSE.equals(this.advisedBeans.get(cacheKey))) {
 			return bean;
 		}
-		/*
-		 * 如果是基础设施类（Pointcut、Advice、Advisor 等接口的实现类），或是应该跳过的类，
-		 * 则不应该生成代理，此时直接返回 bean
-		 */
+
+		//2.如果是基础设施类（Pointcut、Advice、Advisor 等接口的实现类），或是应该跳过的类，则不应该生成代理，此时直接返回 bean
 		if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
 			// 将 <cacheKey, FALSE> 键值对放入缓存中，供上面的 if 分支使用
 			this.advisedBeans.put(cacheKey, Boolean.FALSE);
 			return bean;
 		}
 
-		// 1、返回匹配当前 bean 的所有的 advisor、advice、interceptor
-		// 对于本文的例子，"userServiceImpl" 和 "OrderServiceImpl" 这两个 bean 创建过程中，
-		// 到这边的时候都会返回两个 advisor
+		//3.返回匹配当前 bean 的所有的 advisor、advice、interceptor
+		//"userServiceImpl" 和 "OrderServiceImpl" 这两个 bean 创建过程中，到这边的时候都会返回两个 advisor
 		//getAdvicesAndAdvisorsForBean 这个方法将得到所有的可用于拦截当前 bean 的 advisor、advice、interceptor。 切面 增强  拦截器
 		//我们先要为 bean 筛选出合适的通知器（通知器持有通知）。如何筛选呢？方式由很多，比如我们可以通过正则表达式匹配方法名，当然更多的时候用的是 AspectJ 表达式进行匹配。
 		// 那下面我们就来看一下使用 AspectJ 表达式筛选通知器的过程
-
-		// 2、创建代理
-		// 2.1 根据指定的bean获取所有的适合该bean的增强
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
-		/*
-		 * 若 specificInterceptors != null，即 specificInterceptors != DO_NOT_PROXY，
-		 * 则为 bean 生成代理对象，否则直接返回 bean
-		 */
+
+		 //4.若 specificInterceptors != null，即 specificInterceptors != DO_NOT_PROXY，则为 bean 生成代理对象，否则直接返回 bean
 		if (specificInterceptors != DO_NOT_PROXY) {
 			// 2.2 为指定bean创建代理
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
@@ -371,10 +363,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		}
 
 		this.advisedBeans.put(cacheKey, Boolean.FALSE);
-		/*
-		 * 返回代理对象，此时 IOC 容器输入 bean，得到 proxy。此时，
-		 * beanName 对应的 bean 是代理对象，而非原始的 bean
-		 */
+		//5.返回代理对象，此时 IOC 容器输入 bean，得到 proxy。此时，beanName 对应的 bean 是代理对象，而非原始的 bean
 		return bean;
 	}
 
@@ -465,32 +454,26 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		if (this.beanFactory instanceof ConfigurableListableBeanFactory) {
 			AutoProxyUtils.exposeTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName, beanClass);
 		}
-		// 创建 ProxyFactory 实例
+		//1.创建 ProxyFactory 实例
 		ProxyFactory proxyFactory = new ProxyFactory();
 		proxyFactory.copyFrom(this);
-		/*
-		 * 默认配置下，或用户显式配置 proxy-target-class = "false" 时，
-		 * 这里的 proxyFactory.isProxyTargetClass() 也为 false
-		 */
+
+		 //2.默认配置下，或用户显式配置 proxy-target-class = "false" 时， 这里的 proxyFactory.isProxyTargetClass() 也为 false
 		// 在 schema-based 的配置方式中，我们介绍过，如果希望使用 CGLIB 来代理接口，可以配置
-		// proxy-target-class="true",这样不管有没有接口，都使用 CGLIB 来生成代理：
-		//   <aop:config proxy-target-class="true">......</aop:config>
+		// proxy-target-class="true",这样不管有没有接口，都使用 CGLIB 来生成代理：<aop:config proxy-target-class="true">......</aop:config>
 		if (!proxyFactory.isProxyTargetClass()) {
 			if (shouldProxyTargetClass(beanClass, beanName)) {
 				proxyFactory.setProxyTargetClass(true);
 			}
 			else {
-				/*
-				 * 检测 beanClass 是否实现了接口，若未实现，则将
-				 * proxyFactory 的成员变量 proxyTargetClass 设为 true
-				 */
+				 //检测 beanClass 是否实现了接口，若未实现，则将proxyFactory 的成员变量 proxyTargetClass 设为 true
 				// 点进去稍微看一下代码就知道了，主要就两句：
 				// 1. 有接口的，调用一次或多次：proxyFactory.addInterface(ifc);
 				// 2. 没有接口的，调用：proxyFactory.setProxyTargetClass(true);
 				evaluateProxyInterfaces(beanClass, proxyFactory);
 			}
 		}
-		// specificInterceptors 中若包含有 Advice，此处将 Advice 转为 Advisor
+		//3.specificInterceptors 中若包含有 Advice，此处将 Advice 转为 Advisor
 		// 这个方法会返回匹配了当前 bean 的 advisors 数组
 		// 对于本文的例子，"userServiceImpl" 和 "OrderServiceImpl" 到这边的时候都会返回两个 advisor
 		// 注意：如果 specificInterceptors 中有 advice 和 interceptor，它们也会被包装成 advisor，进去看下源码就清楚了
@@ -504,7 +487,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			proxyFactory.setPreFiltered(true);
 		}
 		//这个方法主要是在内部创建了一个 ProxyFactory 的实例，然后 set 了一大堆内容，剩下的工作就都是这个 ProxyFactory 实例的了
-		// 创建代理
+		//4.创建代理
 		return proxyFactory.getProxy(getProxyClassLoader());
 	}
 

@@ -170,7 +170,6 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	/** ServletContext attribute to find the WebApplicationContext in */
 	private String contextAttribute;
 
-
 	//创建的 WebApplicationContext 类型
 	private Class<?> contextClass = DEFAULT_CONTEXT_CLASS;
 
