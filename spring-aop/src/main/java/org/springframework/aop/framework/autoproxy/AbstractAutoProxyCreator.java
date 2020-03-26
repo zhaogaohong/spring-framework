@@ -450,7 +450,6 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	//   第四个参数 targetSource 携带了真实实现的信息
 	protected Object createProxy(
 			Class<?> beanClass, String beanName, Object[] specificInterceptors, TargetSource targetSource) {
-
 		if (this.beanFactory instanceof ConfigurableListableBeanFactory) {
 			AutoProxyUtils.exposeTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName, beanClass);
 		}

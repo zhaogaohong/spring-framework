@@ -298,8 +298,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			/*
-			 * 稍稍总结一下：
-			 * 到这里的话，要准备创建 Bean 了，对于 singleton 的 Bean 来说，容器中还没创建过此 Bean；
+			 * 要准备创建 Bean 了，对于 singleton 的 Bean 来说，容器中还没创建过此 Bean；
 			 * 对于 prototype 的 Bean 来说，本来就是要创建一个新的 Bean。
 			 */
 			try {
@@ -310,9 +309,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// 检查给定的合并的 BeanDefinition
 				checkMergedBeanDefinition(mbd, beanName, args);
 
-				// 先初始化依赖的所有 Bean，这个很好理解。
-				// 注意，这里的依赖指的是 depends-on 中定义的依赖
-				// <7> 处理所依赖的 bean
+				// 先初始化依赖的所有 Bean。
+				// 注意，这里的依赖指的是 depends-on 中定义的依赖// <7> 处理所依赖的 bean
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
@@ -343,19 +341,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						public Object getObject() throws BeansException {
 							try {
 								// 执行创建 Bean，详情后面再说
-								//第三个参数 args 数组代表创建实例需要的参数，不就是给构造方法用的参数，或者是工厂 Bean 的参数嘛，
-								// 不过要注意，在我们的初始化阶段，args 是 null。
+								//第三个参数 args 数组代表创建实例需要的参数，不就是给构造方法用的参数，或者是工厂 Bean 的参数嘛，不过要注意，在我们的初始化阶段，args 是 null。
 								//这回我们要到一个新的类了 AbstractAutowireCapableBeanFactory，看类名，AutowireCapable？类名是不是也说明了点问题了。
 								//主要是为了以下场景，采用 @Autowired 注解注入属性值：
 //								public class MessageServiceImpl implements MessageService {
 //									@Autowired
 //									private UserService userService;
 //									public String getMessage() {
-//										return userService.getMessage();
-//									}
-//								}
-								//以上这种属于混用了 xml 和 注解 两种方式的配置方式，Spring 会处理这种情况。
-							//	AbstractBeanFactory.java createBean
+//										return userService.getMessage();}}
+								//以上这种属于混用了 xml 和 注解 两种方式的配置方式，Spring 会处理这种情况。AbstractBeanFactory.java createBean
 								return createBean(beanName, mbd, args);
 							}
 							catch (BeansException ex) {
@@ -1684,6 +1678,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throw new BeanIsNotAFactoryException(transformedBeanName(name), beanInstance.getClass());
 		}
 		//2.到这里我们就有了一个 Bean 实例，当然该实例可能是会是是一个正常的 bean 又或者是一个 FactoryBean，如果是 FactoryBean，我们则创建该 Bean
+		//正常bean直接返回
 		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
 			return beanInstance;
 		}

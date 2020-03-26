@@ -75,9 +75,13 @@ public class XmlBeanDefinitionReaderTests {
 	public void withOpenInputStreamAndExplicitValidationMode() {
 		SimpleBeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		Resource resource = new InputStreamResource(getClass().getResourceAsStream("test.xml"));
+
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
+
 		reader.setValidationMode(XmlBeanDefinitionReader.VALIDATION_DTD);
+
 		reader.loadBeanDefinitions(resource);
+
 		testBeanDefinitions(registry);
 	}
 
@@ -152,7 +156,9 @@ public class XmlBeanDefinitionReaderTests {
 		DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
 		Resource resource = new ClassPathResource(resourceName, getClass());
 		new XmlBeanDefinitionReader(factory).loadBeanDefinitions(resource);
+		// 获取bean实例
 		TestBean bean = (TestBean) factory.getBean("testBean");
+
 		assertNotNull(bean);
 	}
 

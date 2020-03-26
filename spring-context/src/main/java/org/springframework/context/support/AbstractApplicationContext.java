@@ -540,23 +540,19 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 				// 初始化当前 ApplicationContext 的 MessageSource，国际化这里就不展开说了，不然没完没了了
 				initMessageSource();
-
 				// 初始化当前 ApplicationContext 的事件广播器，这里也不展开了
 				initApplicationEventMulticaster();
 
 				// 从方法名就可以知道，典型的模板方法(钩子方法)，
 				// 具体的子类可以在这里初始化一些特殊的 Bean（在初始化 singleton beans 之前）
 				onRefresh();
-
 				// 注册事件监听器，监听器需要实现 ApplicationListener 接口。这也不是我们的重点，过
 				registerListeners();
 
 				//我们来总结一下，到目前为止，应该说 BeanFactory 已经创建完成，并且所有的实现了BeanFactoryPostProcessor 接口的 Bean 都已经初始化并
-				// 且其中的 postProcessBeanFactory(factory) 方法已经得到回调执行了。而且 Spring 已经“手动”注册了一些特殊的 Bean，
-				// 如 ‘environment’、‘systemProperties’ 等。
+				// 且其中的 postProcessBeanFactory(factory) 方法已经得到回调执行了。而且 Spring 已经“手动”注册了一些特殊的 Bean，如 ‘environment’、‘systemProperties’ 等。
 				//剩下的就是初始化 singleton beans 了，我们知道它们是单例的，如果没有设置懒加载，那么 Spring 会在接下来初始化所有的
 				// singleton beans。
-
 				// 重点，重点，重点
 				// 初始化所有的 singleton beans
 				//（lazy-init 的除外）
@@ -888,8 +884,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			beanFactory.setConversionService(
 					beanFactory.getBean(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)); //初始化
 		}
-
-
 		if (!beanFactory.hasEmbeddedValueResolver()) {
 			beanFactory.addEmbeddedValueResolver(new StringValueResolver() {
 				@Override
@@ -898,7 +892,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				}
 			});
 		}
-
 		// 先初始化 LoadTimeWeaverAware 类型的 Bean
 		// 之前也说过，这是 AspectJ 相关的内容，放心跳过吧
 		String[] weaverAwareNames = beanFactory.getBeanNamesForType(LoadTimeWeaverAware.class, false, false);
@@ -912,7 +905,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// 没什么别的目的，因为到这一步的时候，Spring 已经开始预初始化 singleton beans 了，
 		// 肯定不希望这个时候还出现 bean 定义解析、加载、注册。
 		beanFactory.freezeConfiguration();
-
 		// 开始初始化
 		beanFactory.preInstantiateSingletons();
 	}

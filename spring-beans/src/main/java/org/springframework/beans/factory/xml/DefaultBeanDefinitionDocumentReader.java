@@ -142,7 +142,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 		//3.钩子 是给子类用的钩子方法
 		preProcessXml(root);
-		//4.往下看
+		//4.解析document
 		parseBeanDefinitions(root, this.delegate);
 		//5.钩子
 		postProcessXml(root);
@@ -175,7 +175,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 					if (delegate.isDefaultNamespace(ele)) {
 						//1.解析 default namespace 下面的几个元素
 						// 解析的节点是 <import />、<alias />、<bean />、<beans />
-						//是因为它们是处于这个 namespace 下定义的：http://www.springframework.org/schema/beans
+						//因为它们是处于这个 namespace 下定义的：http://www.springframework.org/schema/beans
 						parseDefaultElement(ele, delegate);
 					}
 					else {
@@ -193,13 +193,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 //						http://www.springframework.org/schema/context
 //						http://www.springframework.org/schema/context/spring-context.xsd
 //						http://www.springframework.org/schema/mvc
-//						http://www.springframework.org/schema/mvc/spring-mvc.xsd
-//						"
+//						http://www.springframework.org/schema/mvc/spring-mvc.xsd"
 //						default-autowire="byName">
 						//假如读者想分析 <context:property-placeholder location="classpath:xx.properties" /> 的实现原理，
 						// 就应该到 ContextNamespaceHandler 中找答案。
-
-
 //						1. 使用自定义标签
 //						扩展 Spring 自定义标签配置一般需要以下几个步骤：
 //						创建一个需要扩展的组件。
@@ -434,8 +431,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * and registering it with the registry.
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
-		// 1.将 <bean /> 节点中的信息提取出来，然后封装到一个 BeanDefinitionHolder 中，细节往下看
-		//继续往下看怎么解析之前，我们先看下 <bean /> 标签中可以定义哪些属性：
+		// 1.将 <bean /> 节点中的信息提取出来，然后封装到一个 BeanDefinitionHolder 中，我们先看下 <bean /> 标签中可以定义哪些属性：
 //		Property
 //		class	类的全限定名
 //		name	可指定 id、name(用逗号、分号、空格分隔)
@@ -447,8 +443,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 //		initialization method	bean 属性设置完成后，会调用这个方法
 //		destruction method	bean 销毁后的回调方法
 		//上面表格中的内容我想大家都非常熟悉吧，如果不熟悉，那就是你不够了解 Spring 的配置了。
-//			<bean id="exampleBean" name="name1, name2, name3" class="com.javadoop.ExampleBean"
-//			scope="singleton" lazy-init="true" init-method="init" destroy-method="cleanup">
+//			<bean id="exampleBean" name="name1, name2, name3" class="com.javadoop.ExampleBean" scope="singleton" lazy-init="true" init-method="init" destroy-method="cleanup">
 //				<!-- 可以用下面三种形式指定构造参数 -->
 //				<constructor-arg type="int" value="7500000"/>
 //				<constructor-arg name="years" value="7500000"/>

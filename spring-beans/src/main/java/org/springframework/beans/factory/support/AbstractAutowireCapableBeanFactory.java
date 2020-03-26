@@ -423,7 +423,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		Object result = existingBean;
 		// 遍历 BeanPostProcessor
 		for (BeanPostProcessor processor : getBeanPostProcessors()) {
-			// 处理
+			// 处理 AOP 处理
 			result = processor.postProcessAfterInitialization(result, beanName);
 			// 返回空，则返回 result
 			if (result == null) {
@@ -482,8 +482,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		try {
 			//3.实例化的前置处理  给 BeanPostProcessors 一个机会用来返回一个代理类而不是真正的类实例 AOP 的功能就是基于这个地方
 			// 让 InstantiationAwareBeanPostProcessor 在这一步有机会返回代理，
-			// 在 《Spring AOP 源码分析》那篇文章中有解释，这里先跳过
-			//如果代理对象不为空，则直接返回代理对象，这一步骤有非常重要的作用，Spring 后续实现 AOP 就是基于这个地方判断的。
+			// 在 《Spring AOP 源码分析》那篇文章中有解释，这里先跳过，如果代理对象不为空，则直接返回代理对象，这一步骤有非常重要的作用，Spring 后续实现 AOP 就是基于这个地方判断的。
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
 				return bean;
@@ -517,7 +516,6 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final Object[] args)
 			throws BeanCreationException {
-
 		//  BeanWrapper 是对 Bean 的包装，其接口中所定义的功能很简单包括设置获取被包装的对象，获取被包装 bean 的属性描述器
 		// BeanWrapper 主要继承三个核心接口：PropertyAccessor、PropertyEditorRegistry、TypeConverter。
 		//PropertyAccessor  可以访问属性的通用型接口（例如对象的 bean 属性或者对象中的字段
@@ -546,7 +544,6 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// 包装的实例对象的类型
 		Class<?> beanType = (instanceWrapper != null ? instanceWrapper.getWrappedClass() : null);
 		mbd.resolvedTargetType = beanType;
-
 		// 建议跳过吧，涉及接口：MergedBeanDefinitionPostProcessor
 		// <3> 判断是否有后置处理
 		//  如果有后置处理，则允许后置处理修改 BeanDefinition
@@ -563,7 +560,6 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				mbd.postProcessed = true;
 			}
 		}
-
 		// 下面这块代码是为了解决循环依赖的问题，以后有时间，我再对循环依赖这个问题进行解析吧
 		// <4> 解决单例模式的循环依赖
 		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
@@ -594,6 +590,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				//Spring 在完成实例化后，设置完所有属性，进行 “Aware 接口” 和 “BeanPostProcessor 前置处理”之后，
 				// 会接着检测当前 bean 对象是否实现了 InitializingBean 接口。如果是，则会调用其 #afterPropertiesSet() 方法，进一步调整 bean 实例对象的状态
 				//#afterPropertiesSet() 方法中，我们是可以改变 bean 的属性的，这相当于 Spring 容器又给我们提供了一种可以改变 bean 实例对象的方法。
+				//AOP DefaultAdvisorAutoProxyCreator实现的地方
 				exposedObject = initializeBean(beanName, exposedObject, mbd);
 			}
 		}
@@ -1740,12 +1737,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		if (mbd == null || !mbd.isSynthetic()) {
 			// 2、BeanPostProcessor 的 postProcessBeforeInitialization 回调 ，后处理器，before
 			//BeanPostProcessor 的作用是：如果我们想要在 Spring 容器完成 Bean 的实例化，配置和其他的初始化后添加一些自己的逻辑处理，那么请使用该接口，
+			// 1. 执行每一个 BeanPostProcessor 的 postProcessBeforeInitialization 方法
 			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
 		}
 
 		try {
 			// 3、处理 bean 中定义的 init-method，或者如果 bean 实现了 InitializingBean 接口，调用 afterPropertiesSet() 方法
 			// <3> 激活用户自定义的 init 方法
+			// 调用 bean 配置中的 init-method="xxx"
 			invokeInitMethods(beanName, wrappedBean, mbd);
 		}
 		catch (Throwable ex) {
@@ -1756,7 +1755,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		if (mbd == null || !mbd.isSynthetic()) {
 			//4、 BeanPostProcessor 的 postProcessAfterInitialization 回调
 			//Spring AOP 会在 IOC 容器创建 bean 实例的最后对 bean 进行处理。其实就是在这一步进行代理增强
-			// <2> 后处理器，after
+			// 2. 执行每一个 BeanPostProcessor 的 postProcessAfterInitialization 方法
 			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
 		}
 		return wrappedBean;
